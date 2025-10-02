@@ -1,7 +1,7 @@
 # rsecure
 
 ```bash
-openssl genpkey -algorithm RSA -out ~/Keys/rsecure.pem -pkeyopt rsa_keygen_bits:4096
+openssl rand -out ~/Keys/aes-256.key 32 # Generate a random 256-bit AES key (32 bytes)
 ```
 
 > [!NOTE]  

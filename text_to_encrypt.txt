@@ -1,0 +1,8 @@
+# Bank password: 12345678
+# Email password: password123
+# Social media password: qwertyuiop
+# Work account password: letmein!
+# Personal account password: 1234abcd
+# WiFi password: mywifi2021
+# Backup account password: backup!@#
+

@@ -1,3 +1,4 @@
+use std::env::home_dir;
 use std::fs::File;
 use std::io::{self, Read};
 
@@ -7,6 +8,7 @@ use clap::{CommandFactory, Parser};
 use clap_complete::generate;
 
 mod cli;
+mod utils;
 use crate::cli::{Commands, RsecureCliArgs};
 
 fn write_to_file(file_path: &str, contents: &[&[u8]]) -> anyhow::Result<()> {
@@ -78,14 +80,18 @@ fn main() -> anyhow::Result<()> {
                 .encrypt(&nonce, plaintext.as_ref())
                 .expect("encryption failure!");
 
-            write_to_file(&enc_args.destination_file, &[&nonce, &ciphertext])?;
+            let destination_file = &enc_args
+                .destination_file
+                .unwrap_or_else(|| format!("{}.enc", &enc_args.source_file));
+
+            write_to_file(&destination_file, &[&nonce, &ciphertext])?;
 
             if enc_args.remove_file {
                 remove_file(&enc_args.source_file)?;
                 println!("Removed source file {}", enc_args.source_file);
             }
 
-            println!("File encrypted and saved as {}", enc_args.destination_file);
+            println!("File encrypted and saved as {}", destination_file);
         }
         Commands::Decrypt(enc_args) => {
             // Read the AES key from file
@@ -106,15 +112,23 @@ fn main() -> anyhow::Result<()> {
                 .decrypt(nonce, ciphertext)
                 .expect("decryption failure!");
 
+            let destination_file = &enc_args.destination_file.unwrap_or_else(|| {
+                if enc_args.source_file.ends_with(".enc") {
+                    enc_args.source_file.trim_end_matches(".enc").to_string()
+                } else {
+                    format!("{}.dec", &enc_args.source_file)
+                }
+            });
+
             // Save decrypted file
-            write_to_file(&enc_args.destination_file, &[&decrypted_data])?;
+            write_to_file(destination_file, &[&decrypted_data])?;
 
             if enc_args.remove_file {
                 remove_file(&enc_args.source_file)?;
                 println!("Removed source file {}", enc_args.source_file);
             }
 
-            println!("File decrypted and saved as {}", enc_args.destination_file);
+            println!("File decrypted and saved as {}", destination_file);
         }
     }
     Ok(())

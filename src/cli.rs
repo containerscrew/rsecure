@@ -29,7 +29,7 @@ pub enum Commands {
     },
 }
 
-#[derive(Debug, Args)]
+#[derive(Debug, Args, Clone, PartialEq, Eq)]
 pub struct EncryptionArgs {
     #[arg(
         short = 'p',
@@ -50,7 +50,7 @@ pub struct EncryptionArgs {
         long = "destination-file",
         help = "Path to the destination file for the encrypted or decrypted content"
     )]
-    pub destination_file: String,
+    pub destination_file: Option<String>,
 
     #[arg(
         short = 'r',

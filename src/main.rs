@@ -56,6 +56,9 @@ fn main() -> anyhow::Result<()> {
             write_to_file(&create_key_args.output, &[&key.as_slice()])?;
 
             println!("AES key generated and saved to {}", create_key_args.output);
+            println!(
+                "Please, save this key securely, if you lose it, you won't be able to decrypt your files!"
+            );
         }
         Commands::Encrypt(enc_args) => {
             // Read the AES key from file
@@ -85,25 +88,25 @@ fn main() -> anyhow::Result<()> {
             println!("File encrypted and saved as {}", enc_args.destination_file);
         }
         Commands::Decrypt(enc_args) => {
-            // 1. Read the AES key from file
+            // Read the AES key from file
             let key_bytes = open_private_key(&enc_args.private_key_path)?;
 
             let key = Key::<Aes256Gcm>::from_slice(&key_bytes);
             let cipher = Aes256Gcm::new(key);
 
-            // 2. Read the encrypted file (nonce + ciphertext)
+            // Read the encrypted file (nonce + ciphertext)
             let file_content = read_file(&enc_args.source_file)?;
 
-            // 3. Split nonce and ciphertext
+            // Split nonce and ciphertext
             let (nonce_bytes, ciphertext) = file_content.split_at(12); // Nonce is 12 bytes for AES-GCM
             let nonce = Nonce::from_slice(nonce_bytes);
 
-            // 4. Decrypt
+            // Decrypt
             let decrypted_data = cipher
                 .decrypt(nonce, ciphertext)
                 .expect("decryption failure!");
 
-            // 5. Save decrypted file
+            // Save decrypted file
             write_to_file(&enc_args.destination_file, &[&decrypted_data])?;
 
             if enc_args.remove_file {

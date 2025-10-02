@@ -1,6 +1,21 @@
 # rsecure
 
-Secure file encryption using pure Rust and AES 🔒
+Secure file encryption using pure Rust and AES 🔒. _KISS (Keep It Simple Stupid)_
+
+# Installation
+
+```bash
+cargo install rsecure
+```
+
+Without cargo:
+
+```bash
+git clone https://github.com/containerscrew/rsecure.git
+cd rsecure
+cargo build --release
+sudo cp ./target/release/rsecure /usr/local/bin/
+```
 
 # Usage
 
@@ -29,8 +44,6 @@ rsecure encrypt -p ~/.keys/enigma.key -s text_to_encrypt.txt -d encrypted.enc
 ```bash
 rsecure decrypt -p ~/.keys/enigma.key -s encrypted.enc -d decrypted.txt
 ```
-
-> Thats all, KISS (Keep It Simple Stupid)
 
 # License
 

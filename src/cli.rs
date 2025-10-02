@@ -51,6 +51,15 @@ pub struct EncryptionArgs {
         help = "Path to the destination file for the encrypted or decrypted content"
     )]
     pub destination_file: String,
+
+    #[arg(
+        short = 'r',
+        long = "remove-file",
+        default_value_t = false,
+        required = false,
+        help = "Path to the file to remove after encryption or decryption"
+    )]
+    pub remove_file: bool,
 }
 
 #[derive(Debug, Args)]

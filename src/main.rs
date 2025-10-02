@@ -34,6 +34,11 @@ fn read_file(file_path: &str) -> anyhow::Result<Vec<u8>> {
     Ok(content)
 }
 
+fn remove_file(file_path: &str) -> anyhow::Result<()> {
+    std::fs::remove_file(file_path)?;
+    Ok(())
+}
+
 // Encrypts or decrypts a file using AES-256-GCM
 fn main() -> anyhow::Result<()> {
     // Parse command line arguments
@@ -72,6 +77,11 @@ fn main() -> anyhow::Result<()> {
 
             write_to_file(&enc_args.destination_file, &[&nonce, &ciphertext])?;
 
+            if enc_args.remove_file {
+                remove_file(&enc_args.source_file)?;
+                println!("Removed source file {}", enc_args.source_file);
+            }
+
             println!("File encrypted and saved as {}", enc_args.destination_file);
         }
         Commands::Decrypt(enc_args) => {
@@ -95,6 +105,11 @@ fn main() -> anyhow::Result<()> {
 
             // 5. Save decrypted file
             write_to_file(&enc_args.destination_file, &[&decrypted_data])?;
+
+            if enc_args.remove_file {
+                remove_file(&enc_args.source_file)?;
+                println!("Removed source file {}", enc_args.source_file);
+            }
 
             println!("File decrypted and saved as {}", enc_args.destination_file);
         }

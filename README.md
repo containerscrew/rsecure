@@ -1,18 +1,25 @@
 # rsecure
 
-```bash
-openssl rand -out ~/Keys/aes-256.key 32 # Generate a random 256-bit AES key (32 bytes)
-```
+Secure file encryption using pure Rust and AES 
 
-> [!NOTE]  
-> Replace `~/Keys/rsecure.pem` with your desired path.
+# Usage
 
-## Usage
+Generate a new AES 256 key and save it to a file.
 
 ```bash
-cargo run --release -- encrypt -r /Users/dcr/Keys/rsecure.pem -s text_to_encrypt.txt
+rsecure create-key -o ~/.keys/enigma.key
 ```
 
 ```bash
-cargo run --release -- decrypt -r /Users/dcr/Keys/rsecure.pem -s text_to_decrypt.txt
+rsecure encrypt -p ~/.keys/enigma.key -s text_to_encrypt.txt -d encrypted.enc
 ```
+
+```bash
+rsecure decrypt -p ~/.keys/enigma.key -s encrypted.enc -d decrypted.txt
+```
+
+> Thats all, KISS (Keep It Simple Stupid)
+
+# License
+
+**`rsecure`** is distributed under the terms of the [GPL3](./LICENSE-GPL3) license.

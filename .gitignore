@@ -23,5 +23,5 @@ target
 
 
 # Encrypted files
-encrypted.txt
+encrypted.enc
 decrypted.txt

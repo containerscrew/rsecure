@@ -1,16 +1,13 @@
-use colored::Colorize;
 use crate::cli::EncryptionArgs;
-use aes_gcm::{Aes256Gcm, Key, aead::Aead, KeyInit, Nonce};
-use anyhow::Result;
-use walkdir::WalkDir;
-use crate::{open_private_key, read_file, write_to_file, remove_file, print_message};
 use crate::utils::{is_dir, is_file};
+use crate::{open_private_key, print_message, read_file, remove_file, write_to_file};
+use aes_gcm::{Aes256Gcm, Key, KeyInit, Nonce, aead::Aead};
+use anyhow::Result;
+use colored::Colorize;
+use walkdir::WalkDir;
 
 /// Decrypts a single file
-fn decrypt_file(
-    cipher: &Aes256Gcm,
-    source: &str,
-) -> Result<()> {
+fn decrypt_file(cipher: &Aes256Gcm, source: &str) -> Result<()> {
     // Read the encrypted file (contains nonce + ciphertext)
     let file_content = read_file(source)?;
 
@@ -57,19 +54,16 @@ pub fn run(enc_args: EncryptionArgs) -> Result<()> {
             })
         {
             let file_path = entry.path().to_string_lossy().to_string();
-            decrypt_file(
-                &cipher,
-                &file_path,
-            )?;
+            decrypt_file(&cipher, &file_path)?;
         }
     } else if is_file(&enc_args.source) {
         // Decrypt only the source file
-        decrypt_file(
-            &cipher,
-            &enc_args.source,
-        )?;
+        decrypt_file(&cipher, &enc_args.source)?;
     } else {
-        eprintln!("The path '{}' is neither a regular file nor a directory.", enc_args.source);
+        eprintln!(
+            "The path '{}' is neither a regular file nor a directory.",
+            enc_args.source
+        );
     }
 
     Ok(())

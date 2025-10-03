@@ -51,7 +51,7 @@ openssl rand -out /mnt/myusb/rsecure.key 32
 > Or just save it in a `root owned directory` with strict permissions (will require sudo to use it).
 
 ```bash
-rsecure encrypt -p /mnt/myusb/rsecure.key -s /tmp/mydirectory/text_to_encrypt.txt 
+rsecure encrypt -p /mnt/myusb/rsecure.key -s /tmp/mydirectory/text_to_encrypt.txt
 ```
 
 > This will create a file named `text_to_encrypt.txt.enc` in the same directory as the source file.

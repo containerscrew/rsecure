@@ -1,17 +1,16 @@
-use colored::Colorize;
 use crate::cli::EncryptionArgs;
-use aes_gcm::{Aes256Gcm, Key, aead::{Aead, OsRng, AeadCore}, KeyInit};
-use anyhow::Result;
-use walkdir::WalkDir;
-use crate::{open_private_key, read_file, write_to_file, remove_file, print_message};
 use crate::utils::{is_dir, is_file};
+use crate::{open_private_key, print_message, read_file, remove_file, write_to_file};
+use aes_gcm::{
+    Aes256Gcm, Key, KeyInit,
+    aead::{Aead, AeadCore, OsRng},
+};
+use anyhow::Result;
+use colored::Colorize;
+use walkdir::WalkDir;
 
 /// Encrypts a single file.
-fn encrypt_file(
-    cipher: &Aes256Gcm,
-    source: &str,
-    should_remove_file: bool,
-) -> Result<()> {
+fn encrypt_file(cipher: &Aes256Gcm, source: &str, should_remove_file: bool) -> Result<()> {
     // Read plaintext from source file
     let plaintext = read_file(source)?;
 
@@ -59,11 +58,7 @@ pub fn run(enc_args: EncryptionArgs) -> Result<()> {
             }
 
             // Encrypt each file with a new nonce
-            encrypt_file(
-                &cipher,
-                &file_path,
-                enc_args.remove_file,
-            )?;
+            encrypt_file(&cipher, &file_path, enc_args.remove_file)?;
         }
     } else if is_file(&enc_args.source) {
         // If the file is already encrypted, skip it
@@ -72,13 +67,12 @@ pub fn run(enc_args: EncryptionArgs) -> Result<()> {
         }
 
         // Encrypt only the source file
-        encrypt_file(
-            &cipher,
-            &enc_args.source,
-            enc_args.remove_file,
-        )?;
+        encrypt_file(&cipher, &enc_args.source, enc_args.remove_file)?;
     } else {
-        eprintln!("The path '{}' is neither a regular file nor a directory.", enc_args.source);
+        eprintln!(
+            "The path '{}' is neither a regular file nor a directory.",
+            enc_args.source
+        );
     }
 
     Ok(())

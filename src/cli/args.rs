@@ -38,7 +38,7 @@ pub struct EncryptionArgs {
         help = "Path to the source file or folder with files to encrypt or decrypt"
     )]
     pub source: String,
-    
+
     #[arg(
         short = 'r',
         long = "remove-file",

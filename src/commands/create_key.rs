@@ -1,7 +1,7 @@
+use crate::cli::CreateKeyArgs;
+use crate::write_to_file;
 use aes_gcm::aead::OsRng;
 use aes_gcm::{Aes256Gcm, KeyInit};
-use crate::cli::{CreateKeyArgs};
-use crate::write_to_file;
 
 pub fn run(crt_args: CreateKeyArgs) -> anyhow::Result<()> {
     let key = Aes256Gcm::generate_key(OsRng);

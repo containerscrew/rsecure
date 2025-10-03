@@ -1,5 +1,6 @@
 mod cli;
 mod commands;
+mod utils;
 
 use std::fs::File;
 use std::io::{Read, Write};

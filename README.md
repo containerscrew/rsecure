@@ -52,6 +52,17 @@ rsecure encrypt -p /mnt/myusb/rsecure.key -s text_to_encrypt.txt -d encrypted.en
 rsecure decrypt -p /mnt/myusb/rsecure.key -s encrypted.enc -d decrypted.txt
 ```
 
+# Local dev
+
+```bash
+mkdir -p /tmp/rsecure/dirtoencrypt
+touch /tmp/rsecure/filetoencrypt.txt
+echo 'please, hack me!' > /tmp/rsecure/filetoencrypt.txt
+for i in {1..10}; do
+    head -c 100 /dev/urandom | base64 > /tmp/rsecure/dirtoencrypt/file_$i.txt
+done
+```
+
 # License
 
 **`rsecure`** is distributed under the terms of the [GPL3](./LICENSE-GPL3) license.

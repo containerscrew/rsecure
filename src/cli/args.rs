@@ -34,18 +34,11 @@ pub struct EncryptionArgs {
 
     #[arg(
         short = 's',
-        long = "source-file",
-        help = "Path to the source file to encrypt or decrypt"
+        long = "source",
+        help = "Path to the source file or folder with files to encrypt or decrypt"
     )]
-    pub source_file: String,
-
-    #[arg(
-        short = 'd',
-        long = "destination-file",
-        help = "Path to the destination file for the encrypted or decrypted content"
-    )]
-    pub destination_file: Option<String>,
-
+    pub source: String,
+    
     #[arg(
         short = 'r',
         long = "remove-file",

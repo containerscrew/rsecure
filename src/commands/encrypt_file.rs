@@ -1,8 +1,9 @@
+use colored::Colorize;
 use crate::cli::EncryptionArgs;
 use aes_gcm::{Aes256Gcm, Key, aead::{Aead, OsRng, AeadCore}, KeyInit};
 use anyhow::Result;
 use walkdir::WalkDir;
-use crate::{open_private_key, read_file, write_to_file, remove_file};
+use crate::{open_private_key, read_file, write_to_file, remove_file, print_message};
 use crate::utils::{is_dir, is_file};
 
 /// Encrypts a single file.
@@ -33,7 +34,7 @@ fn encrypt_file(
         remove_file(source)?;
     }
 
-    println!("File encrypted and saved as {}", destination_file);
+    print_message!("File encrypted and saved as {}", destination_file);
     Ok(())
 }
 
@@ -51,6 +52,12 @@ pub fn run(enc_args: EncryptionArgs) -> Result<()> {
             .filter(|e| e.path().is_file())
         {
             let file_path = entry.path().to_string_lossy().to_string();
+
+            // If the file is already encrypted, skip it
+            if file_path.ends_with(".enc") {
+                continue;
+            }
+
             // Encrypt each file with a new nonce
             encrypt_file(
                 &cipher,
@@ -59,6 +66,11 @@ pub fn run(enc_args: EncryptionArgs) -> Result<()> {
             )?;
         }
     } else if is_file(&enc_args.source) {
+        // If the file is already encrypted, skip it
+        if enc_args.source.ends_with(".enc") {
+            return Ok(());
+        }
+
         // Encrypt only the source file
         encrypt_file(
             &cipher,

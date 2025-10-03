@@ -1,8 +1,9 @@
+use colored::Colorize;
 use crate::cli::EncryptionArgs;
 use aes_gcm::{Aes256Gcm, Key, aead::Aead, KeyInit, Nonce};
 use anyhow::Result;
 use walkdir::WalkDir;
-use crate::{open_private_key, read_file, write_to_file, remove_file};
+use crate::{open_private_key, read_file, write_to_file, remove_file, print_message};
 use crate::utils::{is_dir, is_file};
 
 /// Decrypts a single file
@@ -34,7 +35,7 @@ fn decrypt_file(
 
     // By the moment, always delete encrypted file after decryption
     remove_file(source)?;
-    println!("File decrypted and saved as {}", destination_file);
+    print_message!("File decrypted and saved as {}", destination_file);
 
     Ok(())
 }

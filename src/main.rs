@@ -2,9 +2,8 @@ mod cli;
 mod commands;
 
 use std::fs::File;
-use std::io::{self, Read, Write};
-use clap::{CommandFactory, Parser};
-use clap_complete::generate;
+use std::io::{Read, Write};
+use clap::{Parser};
 use cli::{RsecureCliArgs, Commands};
 
 fn write_to_file(file_path: &str, contents: &[&[u8]]) -> anyhow::Result<()> {
@@ -40,10 +39,6 @@ fn main() -> anyhow::Result<()> {
     let args = RsecureCliArgs::parse();
 
     match args.command {
-        Commands::Completions { shell } => {
-            let mut cmd = RsecureCliArgs::command();
-            generate(shell, &mut cmd, "rsecure", &mut io::stdout());
-        }
         Commands::CreateKey(create_key_args) => commands::create_key::run(create_key_args)?,
         Commands::Encrypt(enc_args) => commands::encrypt_file::run(enc_args)?,
         Commands::Decrypt(enc_args) => commands::decrypt_file::run(enc_args)?,

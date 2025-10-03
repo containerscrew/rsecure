@@ -1,5 +1,4 @@
 use clap::{Args, Parser, Subcommand};
-use clap_complete::Shell;
 
 #[derive(Parser, Debug)]
 #[clap(
@@ -22,11 +21,6 @@ pub enum Commands {
     Decrypt(EncryptionArgs),
     #[clap(about = "Create a new AES key pair.")]
     CreateKey(CreateKeyArgs),
-    #[clap(about = "Generate shell completions")]
-    Completions {
-        #[arg(value_enum)]
-        shell: Shell,
-    },
 }
 
 #[derive(Debug, Args, Clone, PartialEq, Eq)]

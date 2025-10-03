@@ -20,11 +20,13 @@ Secure file encryption using pure Rust and AES 🔒.
 
 # Installation
 
+Using [`cargo`](https://rustup.rs/):
+
 ```bash
 cargo install rsecure
 ```
 
-Without cargo:
+Locally:
 
 ```bash
 git clone https://github.com/containerscrew/rsecure.git
@@ -71,6 +73,16 @@ rsecure decrypt -p /mnt/myusb/rsecure.key -s /tmp/mydirectory/files/
 ```
 
 > This will decrypt all the files inside the directory `/tmp/mydirectory/files/`
+
+> [!IMPORTANT]
+> By default, `rsecure` will not delete the source plain files after encryption to avoid data loss.
+> If you want to delete the source files after encryption, use `-r` flag.
+
+```bash
+rsecure encrypt -r -p ~/.keys/rsecure.key -s /tmp/rsecure/dirtoencrypt/
+```
+
+> The program will prompt for confirmation before deleting the source files. Just `Press Enter`.
 
 # Local dev
 

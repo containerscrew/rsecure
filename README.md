@@ -82,6 +82,7 @@ rsecure decrypt -p /mnt/myusb/rsecure.key -s /tmp/mydirectory/files/
 rsecure encrypt -r -p ~/.keys/rsecure.key -s /tmp/rsecure/dirtoencrypt/
 ```
 
+> This will delete all the original (plain text) files under `/tmp/rsecure/dirtoencrypt/`.
 > The program will prompt for confirmation before deleting the source files. Just `Press Enter`.
 
 # Local dev

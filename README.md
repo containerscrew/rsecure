@@ -1,6 +1,8 @@
 # rsecure
 
-Secure file encryption using pure Rust and AES 🔒. _KISS (Keep It Simple Stupid)_
+Secure file encryption using pure Rust and AES 🔒.
+
+> _Keep It Simple Stupid_
 
 # Installation
 
@@ -26,6 +28,11 @@ rsecure create-key -o ~/.keys/rsecure.key
 # Or using openssl
 openssl rand -out ~/.keys/rsecure.key 32
 ```
+
+> [!WARNING]
+> Saving the key in the same local filesystem were you save the encrypted files is not a good idea.
+> Save the key in a secure location, like a USB drive or a password manager.
+> Or just save it in a root owned directory with strict permissions
 
 ```bash
 rsecure encrypt -p ~/.keys/rsecure.key -s text_to_encrypt.txt -d encrypted.enc

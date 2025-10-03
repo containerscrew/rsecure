@@ -1,6 +1,6 @@
 # rsecure
 
-Secure file encryption using pure Rust and AES 🔒.
+`rsecure` is a simple and secure command-line tool for AES-256 file encryption and decryption, built in pure Rust. Ideal for protecting sensitive files, backups, and personal data.
 
 > _Keep It Simple Stupid_
 
@@ -17,6 +17,19 @@ Secure file encryption using pure Rust and AES 🔒.
 </p>
 
 ---
+
+![example](./example.png)
+
+---
+
+# Features
+
+- 🔐 AES-256 GCM encryption & decryption
+- 🚀 Fast & dependency-free (pure Rust)
+- 🛡️ Safe key handling (keys never stored with data)
+- 🖥️ Simple CLI interface
+- 📦 Available on crates.io
+
 
 # Installation
 
@@ -37,53 +50,28 @@ sudo cp ./target/release/rsecure /usr/local/bin/
 
 # Usage
 
-Generate a new AES 256 key and save it to a file if you don't have one already:
+## Commands
 
-```bash
-rsecure create-key -o /mnt/myusb/rsecure.key
-# Or using openssl
-openssl rand -out /mnt/myusb/rsecure.key 32
-```
+| Command | Description |
+|---------|-------------|
+| `rsecure create-key -o /mnt/myusb/rsecure.key` | Generate a new AES-256 key and save it to a file |
+| `openssl rand -out /mnt/myusb/rsecure.key 32` | Alternative: generate a random 256-bit key using OpenSSL |
+| `rsecure encrypt -p /mnt/myusb/rsecure.key -s /tmp/mydirectory/text_to_encrypt.txt` | Encrypt a single file (`.enc` file is created in the same directory) |
+| `rsecure encrypt -p /mnt/myusb/rsecure.key -s /tmp/mydirectory/files/` | Encrypt all files in a directory |
+| `rsecure decrypt -p /mnt/myusb/rsecure.key -s /tmp/mydirectory/text_to_encrypt.txt.enc` | Decrypt a single encrypted file |
+| `rsecure decrypt -p /mnt/myusb/rsecure.key -s /tmp/mydirectory/files/` | Decrypt all files in a directory |
+| `rsecure encrypt -r -p ~/.keys/rsecure.key -s /tmp/rsecure/dirtoencrypt/` | Encrypt and **remove** original files after confirmation |
+
 
 > [!WARNING]
-> Saving the key in the same local filesystem were you save the encrypted files is not a good idea.
+> Saving the key in the same local filesystem where you save the encrypted files is not a good idea.
 > Save the key in a secure location, like a `USB drive` or a password manager.
 > Or just save it in a `root owned directory` with strict permissions (will require sudo to use it).
-
-```bash
-rsecure encrypt -p /mnt/myusb/rsecure.key -s /tmp/mydirectory/text_to_encrypt.txt
-```
-
-> This will create a file named `text_to_encrypt.txt.enc` in the same directory as the source file.
-
-```bash
-rsecure encrypt -p /mnt/myusb/rsecure.key -s /tmp/mydirectory/files/
-```
-
-> This will encrypt all the files inside the directory `/tmp/mydirectory/files/`
-
-```bash
-rsecure decrypt -p /mnt/myusb/rsecure.key -s /tmp/mydirectory/text_to_encrypt.txt.enc
-```
-
-> This will decrypt the file named `text_to_encrypt.txt.enc` in the same directory as the source file.
-
-```bash
-rsecure decrypt -p /mnt/myusb/rsecure.key -s /tmp/mydirectory/files/
-```
-
-> This will decrypt all the files inside the directory `/tmp/mydirectory/files/`
 
 > [!IMPORTANT]
 > By default, `rsecure` will not delete the source plain files after encryption to avoid data loss.
 > If you want to delete the source files after encryption, use `-r` flag.
 
-```bash
-rsecure encrypt -r -p ~/.keys/rsecure.key -s /tmp/rsecure/dirtoencrypt/
-```
-
-> This will delete all the original (plain text) files under `/tmp/rsecure/dirtoencrypt/`.
-> The program will prompt for confirmation before deleting the source files. Just `Press Enter`.
 
 # Local dev
 

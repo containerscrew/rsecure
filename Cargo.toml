@@ -5,8 +5,7 @@ edition = "2024"
 
 [dependencies]
 aes-gcm = "0.10.3"
-rand = "0.9.2"
 clap = { version = "4.5.48", features = ["derive"] }
 anyhow = "1.0.71"
 clap_complete = "4.5.58"
-home = "0.5.11"
+walkdir = "2.3.3"

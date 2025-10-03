@@ -16,7 +16,7 @@ pub struct RsecureCliArgs {
 
 #[derive(Debug, Subcommand)]
 pub enum Commands {
-    #[clap(about = "Encrypt a file using your AES key.")]
+    #[clap(about = "Encrypt a file in plain text  using your AES key.")]
     Encrypt(EncryptionArgs),
     #[clap(about = "Decrypt an encrypted file using your AES private key.")]
     Decrypt(EncryptionArgs),

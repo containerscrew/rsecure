@@ -1,6 +1,6 @@
 # rsecure
 
-`rsecure` is a simple and secure command-line tool for AES-256 file encryption and decryption, built in pure Rust. Ideal for protecting sensitive files, backups, and personal data.
+`rsecure` is a simple and secure command-line tool for AES-GCM file encryption and decryption, built in pure Rust. Ideal for protecting sensitive files, backups, and personal data.
 
 > _Keep It Simple Stupid_
 

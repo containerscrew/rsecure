@@ -44,7 +44,6 @@ fn main() -> anyhow::Result<()> {
     match args.command {
         Commands::CreateKey(create_key_args) => commands::create_key::run(create_key_args)?,
         Commands::Encrypt(enc_args) => {
-            // Tell the user if the original file will be deleted after encryption
             if enc_args.remove_file {
                 print_message!("Warning: The original file(s) will be deleted after encryption");
             }

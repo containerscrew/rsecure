@@ -5,7 +5,6 @@ mod utils;
 
 use clap::Parser;
 use cli::{Commands, RsecureCliArgs};
-use colored::Colorize;
 use std::fs::File;
 use std::io::{Read, Write};
 
@@ -43,12 +42,7 @@ fn main() -> anyhow::Result<()> {
 
     match args.command {
         Commands::CreateKey(create_key_args) => commands::create_key::run(create_key_args)?,
-        Commands::Encrypt(enc_args) => {
-            if enc_args.remove_file {
-                print_message!("Warning: The original file(s) will be deleted after encryption");
-            }
-            commands::encrypt_file::run(enc_args)?
-        }
+        Commands::Encrypt(enc_args) => commands::encrypt_file::run(enc_args)?,
         Commands::Decrypt(enc_args) => commands::decrypt_file::run(enc_args)?,
     }
     Ok(())

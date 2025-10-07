@@ -19,6 +19,7 @@ script = "./pre-commit.sh"
 
 [changelog]
 path = "CHANGELOG.md"
+template = "remote"
 authors = [{ username = "containerscrew", signature = "dcrookie" }]
 
 [bump_profiles]

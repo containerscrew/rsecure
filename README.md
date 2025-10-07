@@ -60,7 +60,7 @@ sudo cp ./target/release/rsecure /usr/local/bin/
 | `rsecure encrypt -p /mnt/myusb/rsecure.key -s /tmp/mydirectory/files/` | Encrypt all files in a directory |
 | `rsecure decrypt -p /mnt/myusb/rsecure.key -s /tmp/mydirectory/text_to_encrypt.txt.enc` | Decrypt a single encrypted file |
 | `rsecure decrypt -p /mnt/myusb/rsecure.key -s /tmp/mydirectory/files/` | Decrypt all files in a directory |
-| `rsecure encrypt -r -p ~/.keys/rsecure.key -s /tmp/rsecure/dirtoencrypt/` | Encrypt and **remove** original files after confirmation |
+| `rsecure encrypt -r -p ~/.keys/rsecure.key -s /tmp/rsecure/dirtoencrypt/` | Encrypt and **remove** original files |
 
 
 > [!WARNING]

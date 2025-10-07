@@ -61,6 +61,6 @@ pub struct CreateKeyArgs {
 
 fn print_after_help_message() -> String {
     String::from(
-        "Author: containerscrew \nLicense: GPL3\nWebsite: github.com/containerscrew/rsecure\nIssues: github.com/containerscrew/rsecure/issues\nUsage: github.com/containerscrew/rsecure/tree/main/README.md",
+        "Author: containerscrew \nLicense: GPL3\nWebsite: github.com/containerscrew/rsecure",
     )
 }

@@ -16,6 +16,26 @@
 - remove validation when removing files - (51d28f0) - containerscrew
 
 - - -
+## 0.2.0 - 2025-10-07
+#### Bug Fixes
+- CHANGELOG.md - (88ba2dc) - containerscrew
+#### Miscellaneous Chores
+- update changelog - (d0c695a) - containerscrew
+- update changelog - (ee439ac) - containerscrew
+- fix CHANGELOG.md - (6c7343c) - containerscrew
+- update example image - (cda7401) - containerscrew
+- create file rust-toolchain.toml to force stable channel - (61c9d90) - containerscrew
+- remove code comment in main.rs - (79b46e3) - containerscrew
+- cli about section - (8329b68) - containerscrew
+- doc and comments - (6274013) - containerscrew
+- doc and example image - (42fa075) - containerscrew
+- release pipeline - (e9fad17) - containerscrew
+#### Refactoring
+- remove message when using -r flag - (2567c3a) - containerscrew
+- remove validation when removing files - (51d28f0) - containerscrew
+
+- - -
+
 
 ## 0.1.0 - 2025-10-07
 #### Bug Fixes

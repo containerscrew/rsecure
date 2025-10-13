@@ -39,13 +39,13 @@ fn decrypt_file(cipher: &Aes256Gcm, source: &str) -> Result<()> {
 
 pub fn run(enc_args: EncryptionArgs) -> Result<()> {
     // Read AES key from the specified private key file
-    let key_bytes = open_private_key(&enc_args.private_key_path)?;
+    let key_bytes = open_private_key(&enc_args.common.private_key_path)?;
     let key = Key::<Aes256Gcm>::from_slice(&key_bytes);
     let cipher = Aes256Gcm::new(key);
 
-    if is_dir(&enc_args.source) {
+    if is_dir(&enc_args.common.source) {
         // Iterate all encrypted files (.enc) in the directory recursively
-        for entry in WalkDir::new(&enc_args.source)
+        for entry in WalkDir::new(&enc_args.common.source)
             .into_iter()
             .filter_map(|e| e.ok())
             .filter(|e| {
@@ -56,13 +56,13 @@ pub fn run(enc_args: EncryptionArgs) -> Result<()> {
             let file_path = entry.path().to_string_lossy().to_string();
             decrypt_file(&cipher, &file_path)?;
         }
-    } else if is_file(&enc_args.source) {
+    } else if is_file(&enc_args.common.source) {
         // Decrypt only the source file
-        decrypt_file(&cipher, &enc_args.source)?;
+        decrypt_file(&cipher, &enc_args.common.source)?;
     } else {
         eprintln!(
             "The path '{}' is neither a regular file nor a directory.",
-            enc_args.source
+            enc_args.common.source
         );
     }
 

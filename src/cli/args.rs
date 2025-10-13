@@ -25,6 +25,28 @@ pub enum Commands {
 
 #[derive(Debug, Args, Clone, PartialEq, Eq)]
 pub struct EncryptionArgs {
+    #[command(flatten)]
+    pub common: CommonArgs,
+
+    #[arg(
+        short = 'e',
+        long = "exclude-dir",
+        help = "Exclude directories to encrypt",
+        value_delimiter = ' ',
+        num_args = 1..,
+        required = false
+    )]
+    pub exclude_dir: Option<Vec<String>>,
+}
+
+#[derive(Debug, Args, Clone, PartialEq, Eq)]
+pub struct DecryptionArgs {
+    #[command(flatten)]
+    pub common: CommonArgs,
+}
+
+#[derive(Debug, Args, Clone, PartialEq, Eq)]
+pub struct CommonArgs {
     #[arg(
         short = 'p',
         long = "private-key-path",

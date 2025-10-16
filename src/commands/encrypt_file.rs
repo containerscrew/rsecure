@@ -9,12 +9,8 @@ use anyhow::Result;
 use colored::Colorize;
 use walkdir::WalkDir;
 
-// Check if a directory should be excluded
-fn is_excluded_dir(entry: &walkdir::DirEntry, exclude_dirs: &[String]) -> bool {
-    let path = entry.path(); // Get the full path of the directory
-    exclude_dirs
-        .iter()
-        .any(|exclude| path.to_string_lossy().contains(exclude))
+fn is_excluded_dir(path: &str, exclude_list: &[String]) -> bool {
+    exclude_list.iter().any(|ex| path.contains(ex))
 }
 
 /// Encrypts a single file.
@@ -59,6 +55,12 @@ pub fn run(enc_args: EncryptionArgs) -> Result<()> {
             .into_iter()
             .filter_map(|e| e.ok())
             .filter(|e| e.path().is_file())
+            .filter(|e| {
+                !is_excluded_dir(
+                    &e.path().to_string_lossy(),
+                    enc_args.exclude_dir.as_deref().unwrap_or(&[]),
+                )
+            })
         {
             let file_path = entry.path().to_string_lossy().to_string();
 

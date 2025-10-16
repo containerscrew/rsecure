@@ -30,7 +30,6 @@
 - 🖥️ Simple CLI interface
 - 📦 Available on crates.io
 
-
 # Installation
 
 Using [`cargo`](https://rustup.rs/):
@@ -52,16 +51,16 @@ sudo cp ./target/release/rsecure /usr/local/bin/
 
 ## Commands
 
-| Command | Description |
-|---------|-------------|
-| `rsecure create-key -o /mnt/myusb/rsecure.key` | Generate a new AES-256 key and save it to a file |
-| `openssl rand -out /mnt/myusb/rsecure.key 32` | Alternative: generate a random 256-bit key using OpenSSL |
-| `rsecure encrypt -p /mnt/myusb/rsecure.key -s /tmp/mydirectory/text_to_encrypt.txt` | Encrypt a single file (`.enc` file is created in the same directory) |
-| `rsecure encrypt -p /mnt/myusb/rsecure.key -s /tmp/mydirectory/files/` | Encrypt all files in a directory |
-| `rsecure decrypt -p /mnt/myusb/rsecure.key -s /tmp/mydirectory/text_to_encrypt.txt.enc` | Decrypt a single encrypted file |
-| `rsecure decrypt -p /mnt/myusb/rsecure.key -s /tmp/mydirectory/files/` | Decrypt all files in a directory |
-| `rsecure encrypt -r -p ~/.keys/rsecure.key -s /tmp/rsecure/dirtoencrypt/` | Encrypt and **remove** original files |
-
+| Command                                                                                 | Description                                                          |
+| --------------------------------------------------------------------------------------- | -------------------------------------------------------------------- |
+| `rsecure create-key -o /mnt/myusb/rsecure.key`                                          | Generate a new AES-256 key and save it to a file                     |
+| `openssl rand -out /mnt/myusb/rsecure.key 32`                                           | Alternative: generate a random 256-bit key using OpenSSL             |
+| `rsecure encrypt -p /mnt/myusb/rsecure.key -s /tmp/mydirectory/text_to_encrypt.txt`     | Encrypt a single file (`.enc` file is created in the same directory) |
+| `rsecure encrypt -p /mnt/myusb/rsecure.key -s /tmp/mydirectory/files/`                  | Encrypt all files in a directory                                     |
+| `rsecure decrypt -p /mnt/myusb/rsecure.key -s /tmp/mydirectory/text_to_encrypt.txt.enc` | Decrypt a single encrypted file                                      |
+| `rsecure decrypt -p /mnt/myusb/rsecure.key -s /tmp/mydirectory/files/`                  | Decrypt all files in a directory                                     |
+| `rsecure encrypt -r -p ~/.keys/rsecure.key -s /tmp/rsecure/dirtoencrypt/`               | Encrypt and **remove** original files                                |
+| `rsecure encrypt -p ~/.keys/rsecure.key -s /tmp/rsecure/dirtoencrypt -e '.git'`          | Encrypt all files in a directory excluding `.git` files              |
 
 > [!WARNING]
 > Saving the key in the same local filesystem where you save the encrypted files is not a good idea.
@@ -71,7 +70,6 @@ sudo cp ./target/release/rsecure /usr/local/bin/
 > [!IMPORTANT]
 > By default, `rsecure` will not delete the source plain files after encryption to avoid data loss.
 > If you want to delete the source files after encryption, use `-r` flag.
-
 
 # Local dev
 
@@ -84,6 +82,9 @@ echo 'please, hack me!' > /tmp/rsecure/filetoencrypt.txt
 for i in {1..10}; do
     head -c 100 /dev/urandom | base64 > /tmp/rsecure/dirtoencrypt/file_$i.txt
 done
+mkdir /tmp/rsecure/dirtoencrypt/.git/
+touch /tmp/rsecure/dirtoencrypt/.git/ignoreme.txt
+touch /tmp/rsecure/dirtoencrypt/.git/notthisfile.txt
 ```
 
 ```bash

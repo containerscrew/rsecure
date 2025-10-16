@@ -47,8 +47,6 @@ pub fn run(enc_args: EncryptionArgs) -> Result<()> {
     let key = Key::<Aes256Gcm>::from_slice(&key_bytes);
     let cipher = Aes256Gcm::new(key);
 
-    // && !is_excluded_dir(&enc_args.common.source, &enc_args.exclude_dir)
-
     if is_dir(&enc_args.common.source) {
         // Iterate all files in the directory recursively
         for entry in WalkDir::new(&enc_args.common.source)

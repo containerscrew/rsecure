@@ -18,6 +18,16 @@
 - remove validation when removing files - (51d28f0) - containerscrew
 
 - - -
+## 0.3.0 - 2025-10-16
+#### Features
+- implement exclude-dir flag - (a443bb2) - containerscrew
+- implementing exclude-dir flag - (868c1fc) - containerscrew
+#### Miscellaneous Chores
+- update README.md - (8c2ef22) - containerscrew
+- update changelog for v0.2.0 - (53584da) - containerscrew
+
+- - -
+
 
 ## 0.1.0 - 2025-10-07
 #### Bug Fixes

@@ -1,4 +1,15 @@
-## 0.2.0 - 2025-10-07
+## 0.3.0 - 2025-10-16
+#### Features
+- implement exclude-dir flag - (a443bb2) - containerscrew
+- implementing exclude-dir flag - (868c1fc) - containerscrew
+#### Miscellaneous Chores
+- **(version)** 0.3.0 - (3489c7f) - containerscrew
+- update README.md - (8c2ef22) - containerscrew
+- update changelog for v0.2.0 - (53584da) - containerscrew
+
+- - -
+
+## 0.2.0 - 2025-10-16
 #### Bug Fixes
 - CHANGELOG.md - (88ba2dc) - containerscrew
 #### Miscellaneous Chores
@@ -18,18 +29,8 @@
 - remove validation when removing files - (51d28f0) - containerscrew
 
 - - -
-## 0.3.0 - 2025-10-16
-#### Features
-- implement exclude-dir flag - (a443bb2) - containerscrew
-- implementing exclude-dir flag - (868c1fc) - containerscrew
-#### Miscellaneous Chores
-- update README.md - (8c2ef22) - containerscrew
-- update changelog for v0.2.0 - (53584da) - containerscrew
 
-- - -
-
-
-## 0.1.0 - 2025-10-07
+## 0.1.0 - 2025-10-16
 #### Bug Fixes
 - CHANGELO.md - (b92b544) - containerscrew
 - release pipeline - (38fefa0) - containerscrew

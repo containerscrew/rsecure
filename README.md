@@ -59,8 +59,8 @@ sudo cp ./target/release/rsecure /usr/local/bin/
 | `rsecure encrypt -p /mnt/myusb/rsecure.key -s /tmp/mydirectory/files/`                  | Encrypt all files in a directory                                     |
 | `rsecure decrypt -p /mnt/myusb/rsecure.key -s /tmp/mydirectory/text_to_encrypt.txt.enc` | Decrypt a single encrypted file                                      |
 | `rsecure decrypt -p /mnt/myusb/rsecure.key -s /tmp/mydirectory/files/`                  | Decrypt all files in a directory                                     |
-| `rsecure encrypt -r -p ~/.keys/rsecure.key -s /tmp/rsecure/dirtoencrypt/`               | Encrypt and **remove** original files (plain text)                   |
-| `rsecure encrypt -p ~/.keys/rsecure.key -s /tmp/rsecure/dirtoencrypt -e '.git'`          | Encrypt all files in a directory excluding `.git/` files            |
+| `rsecure encrypt -r -p /mnt/myusb/rsecure.key -s /tmp/rsecure/dirtoencrypt/`               | Encrypt and **remove** original files (plain text)                   |
+| `rsecure encrypt -p /mnt/myusb/rsecure.key -s /tmp/rsecure/dirtoencrypt -e '.git'`          | Encrypt all files in a directory excluding `.git/` files            |
 
 > [!WARNING]
 > Saving the key in the same local filesystem where you save the encrypted files is not a good idea.
@@ -94,6 +94,7 @@ rsecure decrypt -p ~/.keys/rsecure.key -s /tmp/rsecure/filetoencrypt.txt.enc
 #
 rsecure encrypt -p ~/.keys/rsecure.key -s /tmp/rsecure/dirtoencrypt/
 rsecure decrypt -p ~/.keys/rsecure.key -s /tmp/rsecure/dirtoencrypt/
+rsecyre encrypt -p ~/.keys/rsecure.key -s /tmp/rsecure/dirtoencrypt/ -e '.git'
 ```
 
 # License

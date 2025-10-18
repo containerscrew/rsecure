@@ -32,13 +32,20 @@
 
 # Installation
 
-Using [`cargo`](https://rustup.rs/):
+## AUR (Arch Linux)
+
+```bash
+yay -S rsecure
+paru -S rsecure
+```
+
+## Using [`cargo`](https://rustup.rs/)
 
 ```bash
 cargo install rsecure
 ```
 
-Locally:
+## Locally
 
 ```bash
 git clone https://github.com/containerscrew/rsecure.git

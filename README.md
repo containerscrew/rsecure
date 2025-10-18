@@ -35,8 +35,7 @@
 ## AUR (Arch Linux)
 
 ```bash
-yay -S rsecure
-paru -S rsecure
+paru -S rsecure # or yay -S rsecure
 ```
 
 ## Using [`cargo`](https://rustup.rs/)

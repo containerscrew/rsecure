@@ -47,7 +47,7 @@ jobs:
 
       - uses: Swatinem/rust-cache@v2
         with:
-          prefix-key: "rsecure-v1"
+          prefix-key: "rsecure-v1-${{ matrix.platform.target }}-"
           cache-all-crates: true
 
       - name: Rustup

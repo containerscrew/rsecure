@@ -8,6 +8,35 @@
 - update changelog for v0.2.0 - (53584da) - containerscrew
 
 - - -
+## 0.3.1 - 2026-02-10
+#### Build system
+- preparing automatic aur package build - (969f3b0) - containerscrew
+- preparing automatic aur package - (7a14163) - containerscrew
+#### Refactoring
+- pipelines and doc - (e7d126f) - containerscrew
+- remove unnecessary line - (61d7bb2) - containerscrew
+#### Miscellaneous Chores
+- (**deps**) bump anyhow from 1.0.100 to 1.0.101 - (45074f2) - dependabot[bot]
+- (**deps**) bump clap from 4.5.56 to 4.5.57 - (a56c07b) - dependabot[bot]
+- (**deps**) bump clap from 4.5.55 to 4.5.56 - (184e4e9) - dependabot[bot]
+- (**deps**) bump clap from 4.5.54 to 4.5.55 - (bf8ab1a) - dependabot[bot]
+- (**deps**) bump colored from 3.0.0 to 3.1.1 - (a9354ef) - dependabot[bot]
+- (**deps**) bump clap from 4.5.53 to 4.5.54 - (8679fe3) - dependabot[bot]
+- (**deps**) bump clap from 4.5.52 to 4.5.53 - (4b6fcee) - dependabot[bot]
+- (**deps**) bump clap from 4.5.51 to 4.5.52 - (82ab5da) - dependabot[bot]
+- (**deps**) bump clap from 4.5.48 to 4.5.51 - (f3eac45) - dependabot[bot]
+- delete old pipelines - (ada76b7) - containerscrew
+- update cache key in build.yml - (355ab31) - containerscrew
+- new pipeline automerge for dependabot pr - (7991d6a) - containerscrew
+- delete unnecessary file - (9a05d40) - containerscrew
+- update installation methods - (916cc3d) - containerscrew
+- update installation methods - (93651ea) - containerscrew
+- update README.md - (cdf338e) - containerscrew
+- update README.md - (ae1e584) - containerscrew
+- update changelog for v0.3.0 - (ce705d6) - containerscrew
+
+- - -
+
 
 ## 0.2.0 - 2025-10-16
 #### Bug Fixes

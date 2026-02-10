@@ -1,0 +1,113 @@
+name: CI/CD Pipeline
+
+permissions:
+  contents: write
+  pull-requests: write
+
+env:
+  CARGO_TERM_COLOR: always
+  RUST_VERSION: 1.93.0
+
+on:
+  pull_request:
+  push:
+    paths:
+      - "src/**"
+      - ".github/workflows/ci-cd.yml"
+      - "Cargo.toml"
+    branches:
+      - main
+    tags:
+      - "*.*.*"
+
+jobs:
+  linting:
+    name: Linting
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Rustup
+        run: |
+          rustup default stable
+
+      - name: Rustfmt
+        run: cargo fmt --all -- --check
+
+      - name: Check
+        run: cargo check --all -q
+
+  test:
+    name: Test
+    runs-on: ${{ matrix.os }}
+    needs: linting
+    strategy:
+      fail-fast: true
+      matrix:
+        os: ["ubuntu-latest", "macos-latest"]
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Rustup
+        run: |
+          rustup default stable
+      - name: Test
+        run: cargo test --all -q
+
+  build:
+    name: Build - ${{ matrix.platform.release_for }}
+    needs: test
+    strategy:
+      matrix:
+        platform:
+          - release_for: linux-arm64
+            os: ubuntu-24.04-arm
+            target: aarch64-unknown-linux-gnu
+
+          - release_for: linux-amd64
+            os: ubuntu-24.04
+            target: x86_64-unknown-linux-gnu
+
+          - release_for: darwin-amd64
+            os: macOS-latest
+            target: x86_64-apple-darwin
+
+          - release_for: darwin-arm64
+            os: macOS-latest
+            target: aarch64-apple-darwin
+
+    runs-on: ${{ matrix.platform.os }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup dependencies
+        if: matrix.platform.os == 'ubuntu-latest'
+        run: |
+          sudo apt-get -y install linux-headers-$(uname -r)
+
+      - name: Rust
+        run: |
+          rustup default stable
+          rustup target add ${{ matrix.platform.target }}
+
+      - name: Build
+        run: |
+          cargo build --release --target ${{ matrix.platform.target }}
+
+  publish-crate:
+    name: Publish crate to creates.io
+    if: startsWith(github.ref, 'refs/tags/')
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Install Rust
+        run: |
+          rustup update
+          rustup default ${{ env.RUST_VERSION }}
+      - name: Publish to creates.io
+        run: |
+          cargo login ${{ secrets.CARGO_REGISTRY_TOKEN }}
+          cargo publish

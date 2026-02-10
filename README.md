@@ -22,14 +22,6 @@
 
 ---
 
-# Features
-
-- 🔐 AES-256 GCM encryption & decryption
-- 🚀 Fast & dependency-free (pure Rust)
-- 🛡️ Safe key handling (keys never stored with data)
-- 🖥️ Simple CLI interface
-- 📦 Available on crates.io
-
 # Installation
 
 ## AUR (Arch Linux)
@@ -65,13 +57,19 @@ sudo cp ./target/release/rsecure /usr/local/bin/
 | `rsecure encrypt -p /mnt/myusb/rsecure.key -s /tmp/mydirectory/files/`                  | Encrypt all files in a directory                                     |
 | `rsecure decrypt -p /mnt/myusb/rsecure.key -s /tmp/mydirectory/text_to_encrypt.txt.enc` | Decrypt a single encrypted file                                      |
 | `rsecure decrypt -p /mnt/myusb/rsecure.key -s /tmp/mydirectory/files/`                  | Decrypt all files in a directory                                     |
-| `rsecure encrypt -r -p /mnt/myusb/rsecure.key -s /tmp/rsecure/dirtoencrypt/`               | Encrypt and **remove** original files (plain text)                   |
-| `rsecure encrypt -p /mnt/myusb/rsecure.key -s /tmp/rsecure/dirtoencrypt -e '.git'`          | Encrypt all files in a directory excluding `.git/` files            |
+| `rsecure encrypt -r -p /mnt/myusb/rsecure.key -s /tmp/rsecure/dirtoencrypt/`            | Encrypt and **remove** original files (plain text)                   |
+| `rsecure encrypt -p /mnt/myusb/rsecure.key -s /tmp/rsecure/dirtoencrypt -e '.git'`      | Encrypt all files in a directory excluding `.git/` files             |
 
 > [!WARNING]
 > Saving the key in the same local filesystem where you save the encrypted files is not a good idea.
 > Save the key in a secure location, like a `USB drive` or a password manager.
 > Or just save it in a `root owned directory` with strict permissions (will require sudo to use it).
+
+Something like:
+
+```bash
+sudo rsecure encrypt -p /root/rsecure.key -s /home/dcr/Documents/PrivateDocuments -r
+```
 
 > [!IMPORTANT]
 > By default, `rsecure` will not delete the source plain files after encryption to avoid data loss.

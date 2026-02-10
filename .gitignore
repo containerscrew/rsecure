@@ -25,3 +25,6 @@ target
 # Encrypted files
 encrypted.enc
 decrypted.txt
+
+# Packaging
+packaging/arch/PKGBUILD

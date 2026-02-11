@@ -73,7 +73,11 @@ homebrew_casks:
     homepage: "https://github.com/containerscrew/rsecure"
     description: "Secure file encryption using pure Rust and AES"
 
+    commit_author:
+      name: goreleaserbot
+      email: bot@goreleaser.com
+
     repository:
       owner: containerscrew
-      name: rsecure
+      name: homebrew-tap
       branch: main

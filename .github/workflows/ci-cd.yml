@@ -17,6 +17,7 @@ on:
       - ".goreleaser.yaml"
     branches:
       - main
+      - dependabot/*
     tags:
       - "*.*.*"
 

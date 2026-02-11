@@ -12,7 +12,7 @@
     <img alt="GitHub Repo stars" src="https://img.shields.io/github/stars/containerscrew/rsecure?style=social">
     <img alt="GitHub watchers" src="https://img.shields.io/github/watchers/containerscrew/rsecure?style=social">
     <img alt="License" src="https://img.shields.io/badge/License-GPLv3-blue.svg">
-    <img alt="Crates.io" src="https://img.shields.io/crates/v/rsecure">
+    <img alt="Crates.io" src="https://img.shields.io/crates/d/rsecure">
     <img alt="AUR Version" src="https://img.shields.io/aur/version/rsecure">
     <img alt="Crates.io downloads" src="https://img.shields.io/crates/dr/rsecure?style=flat&label=crates.io%20Downloads">
 </p>

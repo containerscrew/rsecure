@@ -19,7 +19,7 @@ fmt: ## Format code with rustfmt
 lint: ## Lint code with clippy
 	$(CARGO) clippy -- -D warnings
 
-build: ## Build 
+build: ## Build
 	$(CARGO) build
 
 release: ## Build release version

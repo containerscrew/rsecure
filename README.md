@@ -30,12 +30,24 @@
 ```bash
 paru -S rsecure # or yay -S rsecure
 ```
+
 ## Homebrew
 
 ```bash
 brew tap containerscrew/tap
 brew install --cask rsecure
 ```
+
+> [!WARNING]
+> Since this binary is not signed by the Apple ecosystem, you will need to run the following command to allow it to run on your system.
+
+```bash
+xattr -d com.apple.quarantine /opt/homebrew/bin/rsecure
+```
+
+> If you still have issues running the binary, I recommend using the `cargo` installation method or downloading the binary from the [releases page](https://github.com/containerscrew/rsecure/releases).
+
+> I will provide a custom script to do it automatically in the future.
 
 ## Using [`cargo`](https://rustup.rs/)
 

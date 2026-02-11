@@ -1,6 +1,7 @@
 use crate::cli::EncryptionArgs;
+use crate::file_ops::{open_private_key, read_file, remove_file, write_to_file};
+use crate::print_message;
 use crate::utils::{is_dir, is_file};
-use crate::{open_private_key, print_message, read_file, remove_file, write_to_file};
 use aes_gcm::{
     Aes256Gcm, Key, KeyInit,
     aead::{Aead, AeadCore, OsRng},

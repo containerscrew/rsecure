@@ -1,5 +1,6 @@
 use crate::cli::CreateKeyArgs;
-use crate::{print_message, write_to_file};
+use crate::file_ops::write_to_file;
+use crate::print_message;
 use aes_gcm::aead::OsRng;
 use aes_gcm::{Aes256Gcm, KeyInit};
 use colored::Colorize;

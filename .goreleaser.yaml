@@ -62,7 +62,6 @@ release:
 
 changelog:
   sort: asc
-  skip: false
   use: github
   filters:
     exclude:

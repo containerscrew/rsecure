@@ -81,3 +81,4 @@ homebrew_casks:
       owner: containerscrew
       name: homebrew-tap
       branch: main
+      token: "{{ .Env.HOMEBREW_TAP_TOKEN }}"

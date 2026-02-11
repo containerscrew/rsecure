@@ -114,7 +114,7 @@ jobs:
 
   goreleaser:
     name: Publish release with goreleaser
-    # if: startsWith(github.ref, 'refs/tags/')
+    #if: startsWith(github.ref, 'refs/tags/')
     needs: build
     runs-on: ubuntu-latest
     steps:
@@ -144,8 +144,8 @@ jobs:
         with:
           distribution: goreleaser
           version: "~> v2"
-          #args: release --snapshot --clean --skip sign
-          args: release --clean
+          args: release --snapshot --clean # testing
+          #args: release --clean
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GPG_FINGERPRINT: ${{ steps.import_gpg.outputs.fingerprint }}

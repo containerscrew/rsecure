@@ -16,9 +16,10 @@ archives:
   - id: rsecure
     formats: ["tar.gz"]
     name_template: "{{ .ProjectName }}_{{ .Version }}_{{ .Os }}_{{ .Arch }}"
-    files:
-      - LICENSE
-      - README.md
+    # Already included in the .tar.gz
+    # files:
+    #   - LICENSE
+    #   - README.md
 
 nfpms:
   - id: rsecure

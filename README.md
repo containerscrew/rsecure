@@ -30,6 +30,12 @@
 ```bash
 paru -S rsecure # or yay -S rsecure
 ```
+## Homebrew
+
+```bash
+brew tap containerscrew/tap
+brew install --cask rsecure
+```
 
 ## Using [`cargo`](https://rustup.rs/)
 
@@ -44,16 +50,6 @@ git clone https://github.com/containerscrew/rsecure.git
 cd rsecure
 cargo build --release
 sudo cp ./target/release/rsecure /usr/local/bin/
-```
-
-### Local build using `goreleaser`
-
-```shell
-cargo install cargo-zigbuild
-brew install zig # or use apt/pacman/dnf to install zig
-# Comment binary_signs in .goreleaser.yaml for local build
-goreleaser release --snapshot --clean
-./dist/rsecure_aarch64-apple-darwin/rsecure
 ```
 
 # Usage

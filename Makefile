@@ -28,4 +28,8 @@ release: ## Build release version
 clean: ## Clean build artifacts
 	$(CARGO) clean
 
-ci: fmt lint test ##  Run all checks for CI
+ci: fmt lint test ## Run all checks for CI
+
+goreleaser: ## Generate binaries using goreleaser (brew install goreleaser and brew install zig)
+	# Needs cargo install cargo-zigbuild
+	goreleaser release --snapshot --clean --skip sign

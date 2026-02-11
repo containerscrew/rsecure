@@ -1,0 +1,74 @@
+version: 2
+
+project_name: rsecure
+
+builds:
+  - id: rsecure
+    builder: rust
+    binary: rsecure
+    targets:
+      - x86_64-apple-darwin
+      - aarch64-apple-darwin
+      - x86_64-unknown-linux-gnu
+      - aarch64-unknown-linux-gnu
+
+archives:
+  - formats: ["zip"]
+
+nfpms:
+  - id: rsecure
+    package_name: rsecure
+    file_name_template: "{{ .ProjectName }}-{{ .Os }}-{{ .Arch }}"
+    homepage: https://github.com/containerscrew/rsecure
+    vendor: containerscrew
+    description: Secure file encryption using pure Rust and AES
+    maintainer: containerscrew <info@containerscrew.com>
+    license: GPL3
+    formats:
+      - apk
+      - deb
+      - rpm
+      - archlinux
+
+checksum:
+  name_template: "checksums.txt"
+  algorithm: sha256
+
+signs:
+  - artifacts: checksum
+    cmd: gpg2
+    output: true
+    args:
+      [
+        "--batch",
+        "-u",
+        "{{ .Env.GPG_FINGERPRINT }}",
+        "--output",
+        "${signature}",
+        "--detach-sign",
+        "${artifact}",
+      ]
+
+snapshot:
+  version_template: "{{ .Tag }}"
+
+release:
+  draft: false
+
+changelog:
+  sort: asc
+  use: github
+  filters:
+    exclude:
+      - "^docs:"
+      - "^test:"
+
+homebrew_casks:
+  - name: rsecure
+    binaries:
+      - rsecure
+    url:
+      template: "https://github.com/containerscrew/rsecure/releases/download/{{ .Tag }}/{{ .ArtifactName }}"
+      verified: "github.com/containerscrew/rsecure/"
+    homepage: "https://github.com/containerscrew/rsecure"
+    description: "Secure file encryption using pure Rust and AES"

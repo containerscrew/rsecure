@@ -112,6 +112,10 @@ rsecure decrypt -p ~/.keys/rsecure.key -s /tmp/rsecure/dirtoencrypt/
 rsecyre encrypt -p ~/.keys/rsecure.key -s /tmp/rsecure/dirtoencrypt/ -e '.git'
 ```
 
+# TODO
+
+- AUR package using `goreleaser` (source and bin)
+
 # License
 
 **`rsecure`** is distributed under the terms of the [GPL3](./LICENSE-GPL3) license.

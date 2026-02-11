@@ -125,8 +125,6 @@ jobs:
         run: |
           rustup default stable
           cargo install cargo-zigbuild
-          sudo apt update
-          sudo apt install -y zig
 
       - name: Import GPG key
         id: import_gpg

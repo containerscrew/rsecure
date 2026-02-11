@@ -86,3 +86,15 @@ fn print_after_help_message() -> String {
         "Author: containerscrew \nLicense: GPL3\nWebsite: github.com/containerscrew/rsecure",
     )
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_print_after_help_message() {
+        let expected =
+            "Author: containerscrew \nLicense: GPL3\nWebsite: github.com/containerscrew/rsecure";
+        assert_eq!(print_after_help_message(), expected);
+    }
+}

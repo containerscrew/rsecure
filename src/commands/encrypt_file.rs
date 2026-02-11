@@ -91,3 +91,56 @@ pub fn run(enc_args: EncryptionArgs) -> Result<()> {
 
     Ok(())
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use aes_gcm::{Aes256Gcm, Key, KeyInit};
+    use std::fs;
+    use tempfile::tempdir;
+
+    #[test]
+    fn test_is_excluded_dir_matches() {
+        let excludes = vec![".git".to_string(), "target".to_string()];
+        assert!(is_excluded_dir("/home/user/project/.git/config", &excludes));
+    }
+
+    #[test]
+    fn test_is_excluded_dir_not_matches() {
+        let excludes = vec![".git".to_string()];
+        assert!(!is_excluded_dir(
+            "/home/user/project/src/main.rs",
+            &excludes
+        ));
+    }
+
+    #[test]
+    fn encrypt_file_creates_enc_file() {
+        let dir = tempdir().unwrap();
+        let file_path = dir.path().join("test.txt");
+        fs::write(&file_path, b"hola mundo").unwrap();
+
+        let key = Key::<Aes256Gcm>::from_slice(&[0u8; 32]);
+        let cipher = Aes256Gcm::new(key);
+
+        encrypt_file(&cipher, file_path.to_str().unwrap(), false).unwrap();
+
+        let enc_path = dir.path().join("test.txt.enc");
+        assert!(enc_path.exists());
+    }
+
+    #[test]
+    fn encrypt_file_removes_original_if_requested() {
+        let dir = tempdir().unwrap();
+        let file_path = dir.path().join("remove_me.txt");
+        fs::write(&file_path, b"secret").unwrap();
+
+        let key = Key::<Aes256Gcm>::from_slice(&[1u8; 32]);
+        let cipher = Aes256Gcm::new(key);
+
+        encrypt_file(&cipher, file_path.to_str().unwrap(), true).unwrap();
+
+        assert!(!file_path.exists());
+        assert!(dir.path().join("remove_me.txt.enc").exists());
+    }
+}

@@ -54,6 +54,6 @@ else
     echo "No changes detected, skipping push."
 fi
 
-# # Cleanup
-# rm -rf "$TEMP_DIR"
-# echo "Done! v$VERSION deployed."
+# Cleanup
+rm -rf "$TEMP_DIR"
+echo "Done! v$VERSION deployed."

@@ -33,3 +33,5 @@ PKGBUILD
 # Goreleaser artifacts
 dist/
 
+# GPG keys
+*.asc

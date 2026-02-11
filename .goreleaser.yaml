@@ -15,6 +15,10 @@ builds:
 archives:
   - id: rsecure
     formats: ["tar.gz"]
+    name_template: "{{ .ProjectName }}-{{ .Os }}-{{ .Arch }}"
+    files:
+      - LICENSE
+      - README.md
 
 nfpms:
   - id: rsecure
@@ -58,6 +62,7 @@ release:
 
 changelog:
   sort: asc
+  skip: false
   use: github
   filters:
     exclude:

@@ -12,7 +12,7 @@ pre-commit run -a --show-diff-on-failure
 # gitleaks git -v
 
 # separator "Running tests with nextest"
-# cargo nextest run
+cargo nextest run
 
 separator "Running cargo fmt and cargo check"
 cargo fmt --all --

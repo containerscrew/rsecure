@@ -1,9 +1,9 @@
 [package]
 name = "rsecure"
-version = "0.3.1"
+version = "0.3.2"
 edition = "2024"
 authors = ["containerscrew info@containerscrew.com"]
-rust-version = "1.90.0"
+rust-version = "1.93.0"
 description = "A simple file encryption and decryption tool using AES-GCM."
 repository = "https://github.com/containerscrew/rsecure"
 license-file = "LICENSE"

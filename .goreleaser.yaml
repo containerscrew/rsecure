@@ -15,7 +15,7 @@ builds:
 archives:
   - id: rsecure
     formats: ["tar.gz"]
-    name_template: "{{ .ProjectName }}-{{ .Os }}-{{ .Arch }}"
+    name_template: "{{ .ProjectName }}_{{ .Version }}_{{ .Os }}_{{ .Arch }}"
     files:
       - LICENSE
       - README.md
@@ -23,7 +23,7 @@ archives:
 nfpms:
   - id: rsecure
     package_name: rsecure
-    file_name_template: "{{ .ProjectName }}-{{ .Os }}-{{ .Arch }}"
+    file_name_template: "{{ .ProjectName }}_{{ .Version }}_{{ .Os }}_{{ .Arch }}"
     homepage: https://github.com/containerscrew/rsecure
     vendor: containerscrew
     description: Secure file encryption using pure Rust and AES

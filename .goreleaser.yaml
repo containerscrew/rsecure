@@ -72,3 +72,8 @@ homebrew_casks:
       verified: "github.com/containerscrew/rsecure/"
     homepage: "https://github.com/containerscrew/rsecure"
     description: "Secure file encryption using pure Rust and AES"
+
+    repository:
+      owner: containerscrew
+      name: rsecure
+      branch: main

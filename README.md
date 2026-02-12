@@ -125,4 +125,4 @@ rsecyre encrypt -p ~/.keys/rsecure.key -s /tmp/rsecure/dirtoencrypt/ -e '.git'
 
 # License
 
-**`rsecure`** is distributed under the terms of the [GPL3](./LICENSE-GPL3) license.
+**`rsecure`** is distributed under the terms of the [GPL3](./LICENSE) license.

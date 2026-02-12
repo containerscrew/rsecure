@@ -1,3 +1,6 @@
+> [!NOTE]
+> Starting in version `0.3.2`, new binaries will be published for: `apt`, `rpm`, `apk`, `pkg.tar.zst`, and `homebrew`. Avaibale for `darwin` and `linux` platforms and architectures `x86_64` and `aarch64`.
+
 # rsecure
 
 `rsecure` is a simple and secure command-line tool for AES-GCM file encryption and decryption, built in pure Rust. Ideal for protecting sensitive files, backups, and personal data.
@@ -123,6 +126,7 @@ rsecyre encrypt -p ~/.keys/rsecure.key -s /tmp/rsecure/dirtoencrypt/ -e '.git'
 # TODO
 
 - AUR package using `goreleaser` (source and bin)
+- Share my public GPG key to verify the integrity of the binary releases
 
 # License
 

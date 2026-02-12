@@ -1,5 +1,5 @@
 > [!NOTE]
-> Starting in version `0.3.2`, new binaries will be published for: `apt`, `rpm`, `apk`, `pkg.tar.zst`, and `homebrew`. Avaibale for `darwin` and `linux` platforms and architectures `x86_64` and `aarch64`.
+> Starting in version `0.3.2`, [new binaries](https://github.com/containerscrew/rsecure/releases) will be published for: `apt`, `rpm`, `apk`, `pkg.tar.zst`, and `homebrew`. Avaibale for `darwin` and `linux` platforms and architectures `x86_64` and `aarch64`.
 
 # rsecure
 

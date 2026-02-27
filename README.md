@@ -25,7 +25,7 @@
 
 # Installation
 
-## Releases (binary) (not working yet)
+## `Binary`, `dpkg`, `rpm` and `apk`
 
 ```shell
 curl --proto '=https' --tlsv1.2 -sSfL https://raw.githubusercontent.com/containerscrew/rsecure/main/install.sh | sh
@@ -36,6 +36,10 @@ Specific version:
 ```shell
 curl --proto '=https' --tlsv1.2 -sSfL https://raw.githubusercontent.com/containerscrew/rsecure/main/install.sh | sh -s -- -v "0.3.0"
 ```
+
+> [!NOTE]
+> The installation script automatic detects your `OS` and `ARCH` and install the correct binary for you (rpm, deb, apk or just a binary in `/usr/local/bin`). In alpine, install the package `apk add gcompat
+` sine the binary is built with `glibc` and alpine uses `musl`.
 
 ## AUR (Arch Linux)
 

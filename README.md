@@ -15,6 +15,7 @@
     <img alt="Crates.io" src="https://img.shields.io/crates/v/rsecure">
     <img alt="AUR Version" src="https://img.shields.io/aur/version/rsecure">
     <img alt="Crates.io Total Downloads" src="https://img.shields.io/crates/d/rsecure">
+    <img alt="Github Releases Downloads" src="https://img.shields.io/github/downloads/containerscrew/rsecure/total">
 </p>
 
 ---

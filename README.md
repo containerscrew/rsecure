@@ -137,7 +137,7 @@ rsecyre encrypt -p ~/.keys/rsecure.key -s /tmp/rsecure/dirtoencrypt/ -e '.git'
 
 # TODO
 
-- AUR package using `goreleaser` (source and bin)
+- Current logic reads every file into memory before encrypting it, which is not good for large files. I need to implement a streaming encryption and decryption logic to handle large files without consuming too much memory. Also take a look to implement parallel encryption and decryption to speed up the process.
 - Share my public GPG key to verify the integrity of the binary releases
 
 # License

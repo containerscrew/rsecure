@@ -32,7 +32,10 @@ case $OS_RAW in
   Linux)
     OS="linux"
     # Smart package manager detection
-    if command -v dpkg >/dev/null 2>&1; then
+    if command -v apk >/dev/null 2>&1; then
+        PKG_FORMAT="apk"
+        INSTALL_METHOD="apk"
+    elif command -v dpkg >/dev/null 2>&1; then
         PKG_FORMAT="deb"
         INSTALL_METHOD="deb"
     elif command -v rpm >/dev/null 2>&1; then
@@ -102,6 +105,10 @@ install_binary(){
   printf "\033[0;32m[info] - Installing %s... \033[0m\n" "$BINARY_NAME"
 
   case $INSTALL_METHOD in
+    apk)
+      # --allow-untrusted is needed for local apks not signed by Alpine's official keys
+      execute_with_sudo apk add --allow-untrusted "$DOWNLOADED_FILE"
+      ;;
     deb)
       execute_with_sudo dpkg -i "$DOWNLOADED_FILE"
       ;;
@@ -110,21 +117,21 @@ install_binary(){
       ;;
     tar)
       # Extract tar.gz and move binary
-      tar -xzf "$DOWNLOADED_FILE" -C /tmp/
+      execute_with_sudo tar -xzf "$DOWNLOADED_FILE" -C /tmp/
       execute_with_sudo mv "/tmp/$BINARY_NAME" "$INSTALLATION_PATH/$BINARY_NAME"
       execute_with_sudo chmod +x "$INSTALLATION_PATH/$BINARY_NAME"
       ;;
   esac
 
   # Cleanup
-  rm -f "$DOWNLOADED_FILE" "/tmp/$BINARY_NAME" 2>/dev/null || true
+  execute_with_sudo rm -f "$DOWNLOADED_FILE" "/tmp/$BINARY_NAME" 2>/dev/null || true
 }
 
 # Function to display help text
 usage() {
     echo "Usage: $0 [-v <version>] [-h]"
     echo "Options:"
-    echo "  -v           Select which version do you want to install (e.g., v0.3.2)."
+    echo "  -v           Select which version do you want to install (e.g., 0.3.2 or v0.3.2)."
     echo "  -h           Display this help message."
 }
 

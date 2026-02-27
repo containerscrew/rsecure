@@ -35,12 +35,12 @@ case $OS_RAW in
     if command -v apk >/dev/null 2>&1; then
         PKG_FORMAT="apk"
         INSTALL_METHOD="apk"
-    elif command -v dpkg >/dev/null 2>&1; then
-        PKG_FORMAT="deb"
-        INSTALL_METHOD="deb"
     elif command -v rpm >/dev/null 2>&1; then
         PKG_FORMAT="rpm"
         INSTALL_METHOD="rpm"
+    elif command -v dpkg >/dev/null 2>&1; then
+        PKG_FORMAT="deb"
+        INSTALL_METHOD="deb"
     fi
     ;;
   Darwin)

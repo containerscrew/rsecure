@@ -3,7 +3,7 @@
 set -e
 
 # Global vars
-INSTALLATION_PATH="/usr/local/bin"
+INSTALLATION_PATH="/usr/local/bin" # Default installation path for user-level binaries (not dpkg/rpm/apk)
 BINARY_NAME="rsecure"
 REPO="containerscrew/rsecure"
 
@@ -35,13 +35,13 @@ case $OS_RAW in
     if command -v apk >/dev/null 2>&1; then
         PKG_FORMAT="apk"
         INSTALL_METHOD="apk"
-    elif command -v dpkg >/dev/null 2>&1; then
-        PKG_FORMAT="deb"
-        INSTALL_METHOD="deb"
     elif command -v rpm >/dev/null 2>&1; then
         PKG_FORMAT="rpm"
         INSTALL_METHOD="rpm"
     fi
+    elif command -v dpkg >/dev/null 2>&1; then
+        PKG_FORMAT="deb"
+        INSTALL_METHOD="deb"
     ;;
   Darwin)
     OS="darwin"

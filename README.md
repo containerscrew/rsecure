@@ -25,6 +25,18 @@
 
 # Installation
 
+## Releases (binary)
+
+```shell
+curl --proto '=https' --tlsv1.2 -sSfL https://raw.githubusercontent.com/containerscrew/rsecure/main/install.sh | sh
+```
+
+Specific version:
+
+```shell
+curl --proto '=https' --tlsv1.2 -sSfL https://raw.githubusercontent.com/containerscrew/rsecure/main/install.sh | sh -s -- -v "0.3.0"
+```
+
 ## AUR (Arch Linux)
 
 ```bash
@@ -45,15 +57,16 @@ brew install --cask rsecure
 xattr -d com.apple.quarantine /opt/homebrew/bin/rsecure
 ```
 
-> If you still have issues running the binary, I recommend using the `cargo` installation method or downloading the binary from the [releases page](https://github.com/containerscrew/rsecure/releases). I will provide a custom `install.sh` script to do it automatically in the future.
+> If you still have issues running the binary, I recommend using the `cargo` installation method or downloading the binary from the [releases page](https://github.com/containerscrew/rsecure/releases). Use the first method (installing via `curl` and the `install.sh` script).
 
 ## Using [`cargo`](https://rustup.rs/)
 
 ```bash
 cargo install rsecure
+cargo install gitrack@0.3.0 # specific version
 ```
 
-## Locally
+## Local build
 
 ```bash
 git clone https://github.com/containerscrew/rsecure.git

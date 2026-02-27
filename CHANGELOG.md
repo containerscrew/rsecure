@@ -8,6 +8,28 @@
 - update changelog for v0.2.0 - (53584da) - containerscrew
 
 - - -
+## 0.3.3 - 2026-02-27
+#### Bug Fixes
+- LICENSE link in README - (0ff323a) - containerscrew
+#### Build system
+- (goreleaser) add automatic AUR packaging - (18548dc) - containerscrew
+#### Documentation
+- update README.md - (5dcdc4d) - containerscrew
+- update README - (31c7571) - containerscrew
+- update README - (79761e6) - containerscrew
+- update README - (58d2e34) - containerscrew
+- update homebrew installation method - (1e45d74) - containerscrew
+#### Miscellaneous Chores
+- **(deps)** bump tempfile from 3.25.0 to 3.26.0 - (5023016) - dependabot[bot]
+- **(deps)** bump anyhow from 1.0.101 to 1.0.102 - (0e4136b) - dependabot[bot]
+- **(deps)** bump clap from 4.5.59 to 4.5.60 - (fdd18fd) - dependabot[bot]
+- **(deps)** bump clap from 4.5.58 to 4.5.59 - (00434b1) - dependabot[bot]
+- dependency updates - (cb2175b) - containerscrew
+- update build.sh script - (35ca15c) - containerscrew
+- .goreleaser.yaml - (01668a3) - containerscrew
+
+- - -
+
 ## 0.3.2 - 2026-02-11
 #### Bug Fixes
 - goreleaser template name - (69b0afd) - containerscrew

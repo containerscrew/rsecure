@@ -3,11 +3,12 @@
 set -e
 
 # Global vars
-INSTALLATION_PATH="/usr/local/bin/"
-BINARY_NAME="nflux"
+INSTALLATION_PATH="/usr/local/bin"
+BINARY_NAME="rsecure"
+REPO="containerscrew/rsecure"
 
 # Welcome message
-echo "Welcome to the $BINARY_NAME installation script! 🚀."
+echo "Welcome to the $BINARY_NAME installation script! 🚀"
 echo "Author: github.com/containerscrew"
 
 happyexit(){
@@ -16,110 +17,140 @@ happyexit(){
   echo ""
   echo "Now run: $ $BINARY_NAME --help"
   echo ""
-  echo "Or directly: $ sudo $BINARY_NAME"
-  echo ""
   exit 0
 }
 
-# Check OS
-OS=$(uname -s)
-arch=$(uname -m)
-cli_arch=""
-case $OS in
+# Detect OS and Architecture
+OS_RAW=$(uname -s)
+ARCH_RAW=$(uname -m)
+CLI_ARCH=""
+OS=""
+PKG_FORMAT="tar.gz" # Default format
+INSTALL_METHOD="tar"
+
+case $OS_RAW in
   Linux)
-    case $arch in
-      x86_64)
-        cli_arch=amd64
-        ;;
-      armv8*)
-        cli_arch=arm64
-        ;;
-      aarch64*)
-        cli_arch=arm64
-        ;;
-      amd64|arm64)
-        cli_arch=$arch
-        ;;
-      *)
-        echo "There is no $BINARY_NAME $OS support for $arch"
-        exit 1
-        ;;
-    esac
+    OS="linux"
+    # Smart package manager detection
+    if command -v dpkg >/dev/null 2>&1; then
+        PKG_FORMAT="deb"
+        INSTALL_METHOD="deb"
+    elif command -v rpm >/dev/null 2>&1; then
+        PKG_FORMAT="rpm"
+        INSTALL_METHOD="rpm"
+    fi
+    ;;
+  Darwin)
+    OS="darwin"
+    PKG_FORMAT="tar.gz"
+    INSTALL_METHOD="tar"
     ;;
   *)
-    echo "There is no $BINARY_NAME $OS support for $arch"
+    echo "❌ Error: There is no $BINARY_NAME support for OS: $OS_RAW"
     exit 1
     ;;
 esac
-OS=$(echo "$OS" | tr '[:upper:]' '[:lower:]')
+
+case $ARCH_RAW in
+  x86_64)
+    CLI_ARCH="amd64"
+    ;;
+  armv8* | aarch64* | arm64)
+    CLI_ARCH="arm64"
+    ;;
+  *)
+    echo "❌ Error: There is no $BINARY_NAME support for architecture: $ARCH_RAW"
+    exit 1
+    ;;
+esac
 
 download_release() {
-  LATEST_VERSION=$(curl -s https://api.github.com/repos/containerscrew/$BINARY_NAME/releases/latest | jq -r ".name")
-  if [ -z "$1" ]; then VERSION=$LATEST_VERSION; else VERSION=$1; fi
+  # Get latest version using grep/sed to avoid depending on jq
+  LATEST_TAG=$(curl -s "https://api.github.com/repos/$REPO/releases/latest" | grep '"tag_name":' | sed -E 's/.*"([^"]+)".*/\1/')
 
-  printf "\033[0;32m[info] - Downloading version: ${VERSION}/$BINARY_NAME-${OS}-${cli_arch}-${VERSION}.zip \033[0m\n"
-  curl -L --fail --remote-name-all https://github.com/containerscrew/$BINARY_NAME/releases/download/"${VERSION}"/$BINARY_NAME-${OS}-${cli_arch}-${VERSION}.zip -o /tmp/$BINARY_NAME.zip
-  rm -rf /tmp/$BINARY_NAME
-  unzip -o /tmp/$BINARY_NAME.zip -d /tmp/
+  if [ -z "$1" ]; then
+    TAG_VERSION=$LATEST_TAG
+  else
+    TAG_VERSION=$1
+  fi
+
+  # GoReleaser artifacts usually don't have the 'v' prefix in the filename (e.g., 0.3.2 instead of v0.3.2)
+  CLEAN_VERSION=$(echo "$TAG_VERSION" | sed 's/^v//')
+
+  FILENAME="${BINARY_NAME}_${CLEAN_VERSION}_${OS}_${CLI_ARCH}.${PKG_FORMAT}"
+  DOWNLOAD_URL="https://github.com/$REPO/releases/download/${TAG_VERSION}/${FILENAME}"
+
+  printf "\033[0;32m[info] - OS: %s | Arch: %s | Format: %s \033[0m\n" "$OS" "$CLI_ARCH" "$PKG_FORMAT"
+  printf "\033[0;32m[info] - Downloading %s... \033[0m\n" "$FILENAME"
+
+  # Download to /tmp
+  curl -L --fail "$DOWNLOAD_URL" -o "/tmp/$FILENAME"
+
+  # Export filename for the install function
+  DOWNLOADED_FILE="/tmp/$FILENAME"
+}
+
+execute_with_sudo() {
+  if [ "$(id -u)" = 0 ]; then
+    "$@"
+  else
+    sudo "$@"
+  fi
 }
 
 install_binary(){
-  if [ "$(id -u)" = 0 ]; then
-      cp /tmp/$BINARY_NAME $INSTALLATION_PATH
-      chmod +x $INSTALLATION_PATH/$BINARY_NAME
-  else
-      sudo cp /tmp/$BINARY_NAME $INSTALLATION_PATH
-      sudo chmod +x $INSTALLATION_PATH/$BINARY_NAME
-  fi
-  rm -rf /tmp/$BINARY_NAME*
-}
+  printf "\033[0;32m[info] - Installing %s... \033[0m\n" "$BINARY_NAME"
 
-install_systemd_service(){
-  wget -O /etc/systemd/system/nflux.service https://raw.githubusercontent.com/containerscrew/nflux/refs/heads/main/systemd/nflux.service
-}
+  case $INSTALL_METHOD in
+    deb)
+      execute_with_sudo dpkg -i "$DOWNLOADED_FILE"
+      ;;
+    rpm)
+      execute_with_sudo rpm -i "$DOWNLOADED_FILE"
+      ;;
+    tar)
+      # Extract tar.gz and move binary
+      tar -xzf "$DOWNLOADED_FILE" -C /tmp/
+      execute_with_sudo mv "/tmp/$BINARY_NAME" "$INSTALLATION_PATH/$BINARY_NAME"
+      execute_with_sudo chmod +x "$INSTALLATION_PATH/$BINARY_NAME"
+      ;;
+  esac
 
-install_nflux_config(){
-  if [ ! -f /etc/nflux/nflux.toml ]; then
-    wget -O /etc/nflux/nflux.toml https://raw.githubusercontent.com/containerscrew/nflux/refs/heads/main/nflux.toml.example
-  fi
+  # Cleanup
+  rm -f "$DOWNLOADED_FILE" "/tmp/$BINARY_NAME" 2>/dev/null || true
 }
 
 # Function to display help text
 usage() {
-    echo "Usage: $0 [-v] [-h]"
+    echo "Usage: $0 [-v <version>] [-h]"
     echo "Options:"
-    echo "  -v           Select which version do you want to install."
-    echo "  -h           Display the help message"
+    echo "  -v           Select which version do you want to install (e.g., v0.3.2)."
+    echo "  -h           Display this help message."
 }
 
 # Parse options using getopts
 while getopts "v:h" option; do
     case "${option}" in
-        v)  # Install specific version
-            version=${OPTARG}
-            download_release "$version"
+        v)
+            VERSION_ARG=${OPTARG}
+            download_release "$VERSION_ARG"
             install_binary
-            install_systemd_service
-            install_nflux_config
             happyexit
             ;;
-        h)  # Help option
+        h)
             usage
             exit 0
             ;;
-        \?) # Invalid option
-            echo "Invalid option: -${OPTARG}"
+        \?)
             usage
             exit 1
             ;;
     esac
 done
 
-# If no flags, by default install latest version
+# If no flags, install latest version by default
 if [ $# -eq 0 ]; then
     download_release
     install_binary
-    install_systemd_service
-    install_nflux_config
     happyexit
 fi

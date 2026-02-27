@@ -25,7 +25,7 @@
 
 # Installation
 
-## Releases (binary)
+## Releases (binary) (not working yet)
 
 ```shell
 curl --proto '=https' --tlsv1.2 -sSfL https://raw.githubusercontent.com/containerscrew/rsecure/main/install.sh | sh
@@ -63,7 +63,7 @@ xattr -d com.apple.quarantine /opt/homebrew/bin/rsecure
 
 ```bash
 cargo install rsecure
-cargo install gitrack@0.3.0 # specific version
+cargo install rsecure@0.3.3 # specific version
 ```
 
 ## Local build

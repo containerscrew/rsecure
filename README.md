@@ -25,8 +25,6 @@
 
 # Installation
 
-## `Binary`, `dpkg`, `rpm` and `apk`
-
 ```shell
 curl --proto '=https' --tlsv1.2 -sSfL https://raw.githubusercontent.com/containerscrew/rsecure/main/install.sh | sh
 ```
@@ -104,6 +102,8 @@ Something like:
 ```bash
 sudo rsecure encrypt -p /root/rsecure.key -s /home/dcr/Documents/PrivateDocuments -r
 ```
+
+> `rsecure` must be in a PATH directory where `root` user can execute it. Which means, if you installed it using `cargo`, you need to add `~/.cargo/bin` to the `PATH` variable in the `root` user environment. Or just copy the binary to `/usr/local/bin/` or any other directory in the `PATH`.
 
 > [!IMPORTANT]
 > By default, `rsecure` will not delete the source plain files after encryption to avoid data loss.

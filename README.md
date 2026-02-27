@@ -14,8 +14,10 @@
     <img alt="License" src="https://img.shields.io/badge/License-GPLv3-blue.svg">
     <img alt="Crates.io" src="https://img.shields.io/crates/v/rsecure">
     <img alt="AUR Version" src="https://img.shields.io/aur/version/rsecure">
-    <img alt="Crates.io Total Downloads" src="https://img.shields.io/crates/d/rsecure">
-    <img alt="Github Releases Downloads" src="https://img.shields.io/github/downloads/containerscrew/rsecure/total">
+    <img alt="Crates.io Total Downloads"
+     src="https://img.shields.io/crates/d/rsecure?label=crates.io%20downloads">
+    <img alt="GitHub Releases Downloads"
+        src="https://img.shields.io/github/downloads/containerscrew/rsecure/total?label=github%20downloads">
 </p>
 
 ---

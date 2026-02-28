@@ -22,7 +22,10 @@ fn decrypt_file(cipher: &Aes256Gcm, source: &str) -> Result<()> {
     let decrypted_data = match cipher.decrypt(nonce, ciphertext) {
         Ok(data) => data,
         Err(e) => {
-            return Err(anyhow::anyhow!("Decryption failed: {}", e));
+            return Err(anyhow::anyhow!(
+                "Decryption failed: {}. Did you select the correct .enc file?",
+                e
+            ));
         }
     };
 

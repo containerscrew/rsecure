@@ -8,6 +8,12 @@
 - update changelog for v0.2.0 - (53584da) - containerscrew
 
 - - -
+## 0.3.5 - 2026-02-28
+#### Bug Fixes
+- panic error when decrypting non .enc files - (ed1419e) - containerscrew
+
+- - -
+
 ## 0.3.4 - 2026-02-28
 #### Bug Fixes
 - panic error when decrypting non .enc files - (4084dfc) - containerscrew

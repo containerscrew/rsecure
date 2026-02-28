@@ -8,6 +8,26 @@
 - update changelog for v0.2.0 - (53584da) - containerscrew
 
 - - -
+## 0.3.4 - 2026-02-28
+#### Bug Fixes
+- panic error when decrypting non .enc files - (4084dfc) - containerscrew
+#### Documentation
+- update README.md - (c1585e8) - containerscrew
+- update README.md - (4004a81) - containerscrew
+- update README.md - (ede3875) - containerscrew
+- update README.md - (8c5b962) - containerscrew
+- update installation methods and local dev doc - (e2d0d77) - containerscrew
+#### Build system
+- automatic installation for alpine distro - (85ee1c4) - containerscrew
+- working with install.sh script - (668fc99) - containerscrew
+#### Miscellaneous Chores
+- update install.sh script - (869017b) - containerscrew
+- update install.sh script - (8a75be3) - containerscrew
+- update install.sh script - (fcc2070) - containerscrew
+- update install.sh script - (ef575a4) - containerscrew
+
+- - -
+
 ## 0.3.3 - 2026-02-27
 #### Bug Fixes
 - AUR_KEY in ci-cd pipeline - (9a18294) - containerscrew

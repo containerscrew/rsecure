@@ -7,6 +7,8 @@ use anyhow::Result;
 use colored::Colorize;
 use walkdir::WalkDir;
 
+// TODO: Add tests for decryption
+
 /// Decrypts a single file
 fn decrypt_file(cipher: &Aes256Gcm, source: &str) -> Result<()> {
     // Read the encrypted file (contains nonce + ciphertext)
@@ -17,9 +19,12 @@ fn decrypt_file(cipher: &Aes256Gcm, source: &str) -> Result<()> {
     let nonce = Nonce::from_slice(nonce_bytes);
 
     // Decrypt the ciphertext
-    let decrypted_data = cipher
-        .decrypt(nonce, ciphertext)
-        .expect("decryption failure!");
+    let decrypted_data = match cipher.decrypt(nonce, ciphertext) {
+        Ok(data) => data,
+        Err(e) => {
+            return Err(anyhow::anyhow!("Decryption failed: {}", e));
+        }
+    };
 
     // Determine destination file name
     let destination_file = if source.ends_with(".enc") {

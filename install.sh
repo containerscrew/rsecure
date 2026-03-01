@@ -113,7 +113,7 @@ install_binary(){
       execute_with_sudo dpkg -i "$DOWNLOADED_FILE"
       ;;
     rpm)
-      execute_with_sudo rpm -i "$DOWNLOADED_FILE"
+      execute_with_sudo rpm -U "$DOWNLOADED_FILE"
       ;;
     tar)
       # Extract tar.gz and move binary

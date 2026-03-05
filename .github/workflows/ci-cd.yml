@@ -170,4 +170,4 @@ jobs:
         🏷️ **Version:** `${{ github.ref_name }}`
         👤 **Author:** ${{ github.actor }}
 
-        [View on PyPI](https://pypi.org/project/rsecure/${{ github.ref_name }})
+        [View on Crates.io](https://crates.io/crates/rsecure)

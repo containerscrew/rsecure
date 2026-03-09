@@ -129,13 +129,20 @@ touch /tmp/rsecure/dirtoencrypt/.git/notthisfile.txt
 ```
 
 ```bash
-rsecure create-key -o ~/.keys/rsecure.key
-rsecure encrypt -p ~/.keys/rsecure.key -s /tmp/rsecure/filetoencrypt.txt
-rsecure decrypt -p ~/.keys/rsecure.key -s /tmp/rsecure/filetoencrypt.txt.enc
+rsecure create-key -o /tmp/rsecure.key
+rsecure encrypt -p /tmp/rsecure.key -s /tmp/rsecure/filetoencrypt.txt
+rsecure decrypt -p /tmp/rsecure.key -s /tmp/rsecure/filetoencrypt.txt.enc
 #
-rsecure encrypt -p ~/.keys/rsecure.key -s /tmp/rsecure/dirtoencrypt/
-rsecure decrypt -p ~/.keys/rsecure.key -s /tmp/rsecure/dirtoencrypt/
-rsecyre encrypt -p ~/.keys/rsecure.key -s /tmp/rsecure/dirtoencrypt/ -e '.git'
+rsecure encrypt -p /tmp/rsecure.key -s /tmp/rsecure/dirtoencrypt/
+rsecure decrypt -p /tmp/rsecure.key -s /tmp/rsecure/dirtoencrypt/
+rsecyre encrypt -p /tmp/rsecure.key -s /tmp/rsecure/dirtoencrypt/ -e '.git'
+```
+
+Large files:
+
+```bash
+sh scripts/fake_data.sh
+/usr/bin/time -v rsecure encrypt -r -p /tmp/rsecure.key -s /tmp/dummy_files/
 ```
 
 # TODO

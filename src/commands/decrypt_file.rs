@@ -1,59 +1,75 @@
+use std::fs::{self, File};
+use std::io::{Read, Write};
+
 use crate::cli::EncryptionArgs;
-use crate::file_ops::{open_private_key, read_file, remove_file, write_to_file};
-use crate::print_message;
+use crate::file_ops::open_private_key;
 use crate::utils::{is_dir, is_file};
-use aes_gcm::{Aes256Gcm, Key, KeyInit, Nonce, aead::Aead};
+use aes_gcm::aead::stream;
+use aes_gcm::{Aes256Gcm, KeyInit};
 use anyhow::Result;
-use colored::Colorize;
 use walkdir::WalkDir;
 
 // TODO: Add tests for decryption
 
-/// Decrypts a single file
-fn decrypt_file(cipher: &Aes256Gcm, source: &str) -> Result<()> {
-    // Read the encrypted file (contains nonce + ciphertext)
-    let file_content = read_file(source)?;
+/// Decrypts file in chunks and deletes encrypted source
+fn decrypt_file_stream(key_bytes: &[u8], source: &str) -> Result<()> {
+    // Init cipher from key bytes
+    let key = aes_gcm::Key::<Aes256Gcm>::from_slice(key_bytes);
+    let cipher = Aes256Gcm::new(key);
 
-    // Split nonce and ciphertext; nonce is 12 bytes for AES-GCM
-    let (nonce_bytes, ciphertext) = file_content.split_at(12);
-    let nonce = Nonce::from_slice(nonce_bytes);
-
-    // Decrypt the ciphertext
-    let decrypted_data = match cipher.decrypt(nonce, ciphertext) {
-        Ok(data) => data,
-        Err(e) => {
-            return Err(anyhow::anyhow!(
-                "Decryption failed: {}. Did you select the correct .enc file?",
-                e
-            ));
-        }
-    };
-
-    // Determine destination file name
-    let destination_file = if source.ends_with(".enc") {
+    // Gen destination filename
+    let dest = if source.ends_with(".enc") {
         source.trim_end_matches(".enc").to_string()
     } else {
         format!("{}.dec", source)
     };
 
-    // Write decrypted data to destination file
-    write_to_file(&destination_file, &[&decrypted_data])?;
+    // Open source and dest files
+    let mut source_file = File::open(source)?;
+    let mut dest_file = File::create(&dest)?;
 
-    // By the moment, always delete encrypted file after decryption
-    remove_file(source)?;
-    print_message!("File decrypted and saved as {}", destination_file);
+    // Read 7-byte nonce
+    let mut nonce = [0u8; 7];
+    source_file.read_exact(&mut nonce)?;
+
+    // Init stream decryptor
+    let mut decryptor = stream::DecryptorBE32::from_aead(cipher, &nonce.into());
+
+    // Set 4KB + 16B buffer for auth tag
+    let mut buffer = [0u8; 4096 + 16];
+
+    // Read, decrypt and write loop
+    loop {
+        let read_count = source_file.read(&mut buffer)?;
+
+        if read_count == buffer.len() {
+            let plaintext = decryptor
+                .decrypt_next(buffer[..].as_ref())
+                .map_err(|_| anyhow::anyhow!("Decryption error or file corrupted"))?;
+            dest_file.write_all(&plaintext)?;
+        } else if read_count > 0 {
+            let plaintext = decryptor
+                .decrypt_last(&buffer[..read_count])
+                .map_err(|_| anyhow::anyhow!("Decryption error on final chunk"))?;
+            dest_file.write_all(&plaintext)?;
+            break;
+        } else {
+            break;
+        }
+    }
+
+    // Always delete encrypted file after decryption
+    fs::remove_file(source)?;
 
     Ok(())
 }
 
 pub fn run(enc_args: EncryptionArgs) -> Result<()> {
-    // Read AES key from the specified private key file
+    // Read AES key from file
     let key_bytes = open_private_key(&enc_args.common.private_key_path)?;
-    let key = Key::<Aes256Gcm>::from_slice(&key_bytes);
-    let cipher = Aes256Gcm::new(key);
 
     if is_dir(&enc_args.common.source) {
-        // Iterate all encrypted files (.enc) in the directory recursively
+        // Iterate and decrypt .enc files recursively
         for entry in WalkDir::new(&enc_args.common.source)
             .into_iter()
             .filter_map(|e| e.ok())
@@ -63,14 +79,13 @@ pub fn run(enc_args: EncryptionArgs) -> Result<()> {
             })
         {
             let file_path = entry.path().to_string_lossy().to_string();
-            decrypt_file(&cipher, &file_path)?;
+            decrypt_file_stream(&key_bytes, &file_path)?;
         }
     } else if is_file(&enc_args.common.source) {
-        // Decrypt only the source file
-        decrypt_file(&cipher, &enc_args.common.source)?;
+        decrypt_file_stream(&key_bytes, &enc_args.common.source)?;
     } else {
         eprintln!(
-            "The path '{}' is neither a regular file nor a directory.",
+            "Path '{}' is neither a file nor directory.",
             enc_args.common.source
         );
     }

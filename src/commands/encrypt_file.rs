@@ -8,13 +8,15 @@ use aes_gcm::aead::rand_core::RngCore;
 use aes_gcm::aead::stream;
 use aes_gcm::{Aes256Gcm, KeyInit, aead::OsRng};
 use anyhow::Result;
+use indicatif::{ProgressBar, ProgressStyle};
+use rayon::iter::{IntoParallelIterator, ParallelIterator};
 use walkdir::WalkDir;
 
 fn is_excluded_dir(path: &str, exclude_list: &[String]) -> bool {
     exclude_list.iter().any(|ex| path.contains(ex))
 }
 
-// Encrypt file in chunks and handle deletion
+// Encrypt file in chunks
 fn encrypt_file_stream(key_bytes: &[u8], source: &str, should_remove: bool) -> Result<()> {
     // Init cipher
     let key = aes_gcm::Key::<Aes256Gcm>::from_slice(key_bytes);
@@ -27,7 +29,7 @@ fn encrypt_file_stream(key_bytes: &[u8], source: &str, should_remove: bool) -> R
     // Init stream encryptor
     let mut encryptor = stream::EncryptorBE32::from_aead(cipher, &nonce.into());
 
-    // Set destination filename
+    // Set dest filename
     let dest = format!("{}.enc", source);
 
     // Open files
@@ -37,8 +39,8 @@ fn encrypt_file_stream(key_bytes: &[u8], source: &str, should_remove: bool) -> R
     // Write nonce
     dest_file.write_all(&nonce)?;
 
-    // Set 4KB buffer
-    let mut buffer = [0u8; 4096];
+    // Set 128KB buffer
+    let mut buffer = vec![0u8; 131072];
 
     // Read, encrypt, write loop
     loop {
@@ -73,8 +75,8 @@ pub fn run(enc_args: EncryptionArgs) -> Result<()> {
     let key_bytes = open_private_key(&enc_args.common.private_key_path)?;
 
     if is_dir(&enc_args.common.source) {
-        // Iterate files and filter excluded dirs
-        for entry in WalkDir::new(&enc_args.common.source)
+        // Collect files into Vec
+        let files_to_process: Vec<_> = WalkDir::new(&enc_args.common.source)
             .into_iter()
             .filter_map(|e| e.ok())
             .filter(|e| e.path().is_file())
@@ -84,29 +86,37 @@ pub fn run(enc_args: EncryptionArgs) -> Result<()> {
                     enc_args.exclude_dir.as_deref().unwrap_or(&[]),
                 )
             })
-        {
-            let file_path = entry.path().to_string_lossy().to_string();
+            .map(|e| e.path().to_string_lossy().to_string())
+            .filter(|path| !path.ends_with(".enc"))
+            .collect();
 
-            // Skip encrypted files
-            if file_path.ends_with(".enc") {
-                continue;
+        // Setup progress bar
+        let pb = ProgressBar::new(files_to_process.len() as u64);
+        pb.set_style(ProgressStyle::default_bar()
+            .template("{spinner:.green} [{elapsed_precise}] [{wide_bar:.cyan/blue}] {pos}/{len} files ({eta})")
+            .unwrap()
+            .progress_chars("#>-"));
+
+        // Process files in parallel
+        files_to_process.into_par_iter().for_each(|file_path| {
+            if let Err(e) = encrypt_file_stream(&key_bytes, &file_path, enc_args.common.remove_file)
+            {
+                eprintln!("Failed to encrypt {}: {}", file_path, e);
             }
+            // Update progress bar
+            pb.inc(1);
+        });
 
-            // Encrypt file
-            encrypt_file_stream(&key_bytes, &file_path, enc_args.common.remove_file)?;
-        }
+        // Finish progress bar
+        pb.finish_with_message("Encryption complete");
     } else if is_file(&enc_args.common.source) {
-        // Skip encrypted file
-        if enc_args.common.source.ends_with(".enc") {
-            return Ok(());
+        if !enc_args.common.source.ends_with(".enc") {
+            encrypt_file_stream(
+                &key_bytes,
+                &enc_args.common.source,
+                enc_args.common.remove_file,
+            )?;
         }
-
-        // Encrypt single file
-        encrypt_file_stream(
-            &key_bytes,
-            &enc_args.common.source,
-            enc_args.common.remove_file,
-        )?;
     } else {
         eprintln!("Path '{}' is not valid.", enc_args.common.source);
     }

@@ -2,7 +2,7 @@
 
 `rsecure` is a simple and secure command-line tool for AES-GCM file encryption and decryption, built in pure Rust. Ideal for protecting sensitive files, backups, and personal data.
 
-> _Keep It Simple Stupid_
+`rsecure` uses `stream` encryption and `rayon` parallelism. The speed of the encryption also depends of your hardware specs (disk speed, CPU speed and number of cores).
 
 <p align="center" >
     <img alt="GitHub code size in bytes" src="https://img.shields.io/github/languages/code-size/containerscrew/rsecure">
@@ -117,38 +117,22 @@ sudo rsecure encrypt -p /root/rsecure.key -s /home/dcr/Documents/PrivateDocument
 Testing encryption and decryption:
 
 ```bash
-mkdir -p /tmp/rsecure/dirtoencrypt
-touch /tmp/rsecure/filetoencrypt.txt
-echo 'please, hack me!' > /tmp/rsecure/filetoencrypt.txt
-for i in {1..10}; do
-    head -c 100 /dev/urandom | base64 > /tmp/rsecure/dirtoencrypt/file_$i.txt
-done
-mkdir /tmp/rsecure/dirtoencrypt/.git/
-touch /tmp/rsecure/dirtoencrypt/.git/ignoreme.txt
-touch /tmp/rsecure/dirtoencrypt/.git/notthisfile.txt
-```
-
-```bash
-rsecure create-key -o /tmp/rsecure.key
-rsecure encrypt -p /tmp/rsecure.key -s /tmp/rsecure/filetoencrypt.txt
-rsecure decrypt -p /tmp/rsecure.key -s /tmp/rsecure/filetoencrypt.txt.enc
-#
-rsecure encrypt -p /tmp/rsecure.key -s /tmp/rsecure/dirtoencrypt/
-rsecure decrypt -p /tmp/rsecure.key -s /tmp/rsecure/dirtoencrypt/
-rsecyre encrypt -p /tmp/rsecure.key -s /tmp/rsecure/dirtoencrypt/ -e '.git'
-```
-
-Large files:
-
-```bash
+git clone https://github.com/containerscrew/rsecure.git
+cd rsecure
 sh scripts/fake_data.sh
-/usr/bin/time -v rsecure encrypt -r -p /tmp/rsecure.key -s /tmp/dummy_files/
+rsecure encrypt -p /tmp/rsecure.key -s /tmp/dummy_files/
+rsecure decrypt -p /tmp/rsecure.key -s /tmp/dummy_files/
 ```
 
-# TODO
+> Edit the `fake_data.sh` script to create different types of files and directories for testing.
 
-- Current logic reads every file into memory before encrypting it, which is not good for large files. I need to implement a streaming encryption and decryption logic to handle large files without consuming too much memory. Also take a look to implement parallel encryption and decryption to speed up the process.
-- Share my public GPG key to verify the integrity of the binary releases
+## Benchmark (hyperfine)
+
+```bash
+cargo install hyperfine
+hyperfine --runs 5 'rsecure encrypt -p /tmp/rsecure.key -s /tmp/dummy_files/'
+hyperfine --runs 5 'rsecure decrypt -p /tmp/rsecure.key -s /tmp/dummy_files/'
+```
 
 # License
 

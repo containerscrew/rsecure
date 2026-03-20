@@ -2,8 +2,6 @@ mod cli;
 mod commands;
 mod file_ops;
 
-#[macro_use]
-mod macros;
 mod utils;
 
 use clap::Parser;

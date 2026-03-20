@@ -119,7 +119,7 @@ Testing encryption and decryption:
 ```bash
 git clone https://github.com/containerscrew/rsecure.git
 cd rsecure
-sh scripts/fake_data.sh
+sh scripts/fake_data.sh # will generate 17gb of fake data in /tmp/dummy_files/
 rsecure encrypt -p /tmp/rsecure.key -s /tmp/dummy_files/
 rsecure decrypt -p /tmp/rsecure.key -s /tmp/dummy_files/
 ```
@@ -133,6 +133,10 @@ cargo install hyperfine
 hyperfine --runs 5 'rsecure encrypt -p /tmp/rsecure.key -s /tmp/dummy_files/'
 hyperfine --runs 5 'rsecure decrypt -p /tmp/rsecure.key -s /tmp/dummy_files/'
 ```
+
+# TODO
+
+* Add support for `zip` and `tar` archives.
 
 # License
 

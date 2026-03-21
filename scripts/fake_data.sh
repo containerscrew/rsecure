@@ -1,8 +1,5 @@
 #! /usr/bin/env bash
 
-# If using linux like fedora, don´t create 17gb of random data in /tmp, since it is a tmpfs and will fill up the RAM.
-
-
 # Clean dir
 rm -rf /var/tmp/dummy_files
 

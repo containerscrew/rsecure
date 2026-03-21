@@ -1,0 +1,35 @@
+images:
+  - location: "https://dl.fedoraproject.org/pub/fedora/linux/releases/43/Cloud/aarch64/images/Fedora-Cloud-Base-Generic-43-1.6.aarch64.qcow2"
+    arch: "aarch64"
+  - location: "https://dl.fedoraproject.org/pub/fedora/linux/releases/43/Cloud/x86_64/images/Fedora-Cloud-Base-Generic-43-1.6.x86_64.qcow2"
+    arch: "x86_64"
+
+vmType: "vz"
+
+# Enable Rosetta for Linux.
+# Hint: try `softwareupdate --install-rosetta` if Lima gets stuck at `Installing rosetta...`
+# Register rosetta to /proc/sys/fs/binfmt_misc
+rosetta:
+  enabled: true
+  binfmt: true
+
+user:
+  name: "fedora"
+
+memory: "2GiB"
+cpus: 4
+disk: "35GiB"
+
+provision:
+  - mode: system
+    script: |
+      #!/bin/bash
+      set -eux -o pipefail
+      dnf update -y
+      dnf install -y curl sudo bash git
+
+  - mode: user
+    script: |
+      #!/bin/bash
+      set -eux -o pipefail
+      echo "nothing to do here"

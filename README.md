@@ -84,16 +84,16 @@ sudo cp ./target/release/rsecure /usr/local/bin/
 
 ## Commands
 
-| Command                                                                                 | Description                                                          |
-| --------------------------------------------------------------------------------------- | -------------------------------------------------------------------- |
-| `rsecure create-key -o /mnt/myusb/rsecure.key`                                          | Generate a new AES-256 key and save it to a file                     |
-| `openssl rand -out /mnt/myusb/rsecure.key 32`                                           | Alternative: generate a random 256-bit key using OpenSSL             |
-| `rsecure encrypt -p /mnt/myusb/rsecure.key -s /tmp/mydirectory/text_to_encrypt.txt`     | Encrypt a single file (`.enc` file is created in the same directory) |
-| `rsecure encrypt -p /mnt/myusb/rsecure.key -s /tmp/mydirectory/files/`                  | Encrypt all files in a directory                                     |
-| `rsecure decrypt -p /mnt/myusb/rsecure.key -s /tmp/mydirectory/text_to_encrypt.txt.enc` | Decrypt a single encrypted file                                      |
-| `rsecure decrypt -p /mnt/myusb/rsecure.key -s /tmp/mydirectory/files/`                  | Decrypt all files in a directory                                     |
-| `rsecure encrypt -r -p /mnt/myusb/rsecure.key -s /tmp/rsecure/dirtoencrypt/`            | Encrypt and **remove** original files (plain text)                   |
-| `rsecure encrypt -p /mnt/myusb/rsecure.key -s /tmp/rsecure/dirtoencrypt -e '.git'`      | Encrypt all files in a directory excluding `.git/` files             |
+| Command                                                                                  | Description                                                          |
+| ---------------------------------------------------------------------------------------- | -------------------------------------------------------------------- |
+| `rsecure create-key -o /mnt/myusb/rsecure.key`                                           | Generate a new AES-256 key and save it to a file                     |
+| `openssl rand -out /mnt/myusb/rsecure.key 32`                                            | Alternative: generate a random 256-bit key using OpenSSL             |
+| `rsecure encrypt -p /mnt/myusb/rsecure.key -s /home/mydirectory/text_to_encrypt.txt`     | Encrypt a single file (`.enc` file is created in the same directory) |
+| `rsecure encrypt -p /mnt/myusb/rsecure.key -s /home/mydirectory/files/`                  | Encrypt all files in a directory                                     |
+| `rsecure decrypt -p /mnt/myusb/rsecure.key -s /home/mydirectory/text_to_encrypt.txt.enc` | Decrypt a single encrypted file                                      |
+| `rsecure decrypt -p /mnt/myusb/rsecure.key -s /home/mydirectory/files/`                  | Decrypt all files in a directory                                     |
+| `rsecure encrypt -r -p /mnt/myusb/rsecure.key -s /home/rsecure/dirtoencrypt/`            | Encrypt and **remove** original files (plain text)                   |
+| `rsecure encrypt -p /mnt/myusb/rsecure.key -s /home/rsecure/dirtoencrypt -e '.git'`      | Encrypt all files in a directory excluding `.git/` files             |
 
 > [!WARNING]
 > Saving the key in the same local filesystem where you save the encrypted files is not a good idea.
@@ -119,9 +119,9 @@ Testing encryption and decryption:
 ```bash
 git clone https://github.com/containerscrew/rsecure.git
 cd rsecure
-sh scripts/fake_data.sh # will generate 17gb of fake data in /tmp/dummy_files/
-rsecure encrypt -p /tmp/rsecure.key -s /tmp/dummy_files/
-rsecure decrypt -p /tmp/rsecure.key -s /tmp/dummy_files/
+sh scripts/fake_data.sh # will generate 17gb of fake data in /var/home/dummy_files/
+rsecure encrypt -p /var/home/rsecure.key -s /var/home/dummy_files/
+rsecure decrypt -p /var/home/rsecure.key -s /var/home/dummy_files/
 ```
 
 > Edit the `fake_data.sh` script to create different types of files and directories for testing.
@@ -130,13 +130,13 @@ rsecure decrypt -p /tmp/rsecure.key -s /tmp/dummy_files/
 
 ```bash
 cargo install hyperfine
-hyperfine --runs 5 'rsecure encrypt -p /tmp/rsecure.key -s /tmp/dummy_files/'
-hyperfine --runs 5 'rsecure decrypt -p /tmp/rsecure.key -s /tmp/dummy_files/'
+hyperfine --runs 5 'rsecure encrypt -p /var/home/rsecure.key -s /var/home/dummy_files/'
+hyperfine --runs 5 'rsecure decrypt -p /var/home/rsecure.key -s /var/home/dummy_files/'
 ```
 
 # TODO
 
-* Add support for `zip` and `tar` archives.
+- Add support for `zip` and `tar` archives.
 
 # License
 

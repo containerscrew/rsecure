@@ -119,9 +119,9 @@ Testing encryption and decryption:
 ```bash
 git clone https://github.com/containerscrew/rsecure.git
 cd rsecure
-sh scripts/fake_data.sh # will generate 17gb of fake data in /var/home/dummy_files/
-rsecure encrypt -p /var/home/rsecure.key -s /var/home/dummy_files/
-rsecure decrypt -p /var/home/rsecure.key -s /var/home/dummy_files/
+sh scripts/fake_data.sh # will generate 17gb of fake data in /var/tmp/dummy_files/
+rsecure encrypt -p /var/tmp/rsecure.key -s /var/tmp/dummy_files/
+rsecure decrypt -p /var/tmp/rsecure.key -s /var/tmp/dummy_files/
 ```
 
 > Edit the `fake_data.sh` script to create different types of files and directories for testing.
@@ -130,8 +130,8 @@ rsecure decrypt -p /var/home/rsecure.key -s /var/home/dummy_files/
 
 ```bash
 cargo install hyperfine
-hyperfine --runs 5 'rsecure encrypt -p /var/home/rsecure.key -s /var/home/dummy_files/'
-hyperfine --runs 5 'rsecure decrypt -p /var/home/rsecure.key -s /var/home/dummy_files/'
+hyperfine --runs 5 'rsecure encrypt -p /var/tmp/rsecure.key -s /var/tmp/dummy_files/'
+hyperfine --runs 5 'rsecure decrypt -p /var/tmp/rsecure.key -s /var/tmp/dummy_files/'
 ```
 
 # TODO

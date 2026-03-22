@@ -32,7 +32,7 @@ jobs:
 
       - name: Rustup
         run: |
-          rustup default stable
+          rustup default ${{ env.RUST_VERSION }}
 
       - name: Rustfmt
         run: cargo fmt --all -- --check
@@ -50,10 +50,10 @@ jobs:
         os: ["ubuntu-latest", "macos-latest"]
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
       - name: Rustup
         run: |
-          rustup default stable
+          rustup default ${{ env.RUST_VERSION }}
       - name: Test
         run: cargo test --all -q
 
@@ -82,7 +82,7 @@ jobs:
     runs-on: ${{ matrix.platform.os }}
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Setup dependencies
         if: matrix.platform.os == 'ubuntu-latest'
@@ -105,7 +105,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Setup Zig
         # https://codeberg.org/mlugg/setup-zig/
@@ -115,7 +115,7 @@ jobs:
 
       - name: Install Rust and dependencies
         run: |
-          rustup default stable
+          rustup default ${{ env.RUST_VERSION }}
           cargo install cargo-zigbuild
 
       - name: Import GPG key

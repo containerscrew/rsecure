@@ -155,20 +155,3 @@ jobs:
         run: |
           cargo login ${{ secrets.CARGO_REGISTRY_TOKEN }}
           cargo publish
-
-  alert:
-    name: Send Telegram Notification
-    needs: publish-crate
-    uses: appleboy/telegram-action@master
-    with:
-      to: ${{ secrets.TELEGRAM_TO }}
-      token: ${{ secrets.TELEGRAM_TOKEN }}
-      format: markdown
-      message: |
-        🚀 **New Version Published!**
-
-        📦 **Project:** ${{ github.repository }}
-        🏷️ **Version:** `${{ github.ref_name }}`
-        👤 **Author:** ${{ github.actor }}
-
-        [View on Crates.io](https://crates.io/crates/rsecure)

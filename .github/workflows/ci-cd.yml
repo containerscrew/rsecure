@@ -86,13 +86,12 @@ jobs:
         run: |
           sudo apt-get -y install linux-headers-$(uname -r)
 
-      - name: Rust
-        run: |
-          rustup default ${{ env.RUST_VERSION }}
-          rustup target add ${{ matrix.platform.target }}
-
       - name: Build
         run: |
+          rustup update
+          rustup default ${{ env.RUST_VERSION }}
+          rustup target add ${{ matrix.platform.target }}
+          rustc --version
           cargo build --release --target ${{ matrix.platform.target }}
 
   goreleaser:

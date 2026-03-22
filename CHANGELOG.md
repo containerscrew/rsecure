@@ -21,6 +21,41 @@
 - (**deps**) bump clap from 4.5.60 to 4.6.0 - (6436f01) - dependabot[bot]
 - (**deps**) bump assert_cmd from 2.1.2 to 2.2.0 - (0a8b521) - dependabot[bot]
 - (**deps**) bump tempfile from 3.26.0 to 3.27.0 - (a71b6c9) - dependabot[bot]
+- (**version**) 0.4.0 - (f0f1ae6) - containerscrew
+- (**version**) 0.4.0 - (c57159a) - containerscrew
+- (**version**) 0.4.0 - (e593018) - containerscrew
+- remove .cargo/ dir - (b0e5135) - containerscrew
+- fix pipeline build stage - (e72dd99) - containerscrew
+- fix pipeline build stage - (b8adaa4) - containerscrew
+- update checkout action version - (e944cfe) - containerscrew
+- update ci-cd pipeline - (88377b1) - containerscrew
+- update checkout action version & rustup default stable - (35f049f) - containerscrew
+- remove telegram notification from ci-cd pipeline - (3fa7123) - containerscrew
+- update rust version - (9bf09ec) - containerscrew
+- remove comment - (d97eafd) - containerscrew
+- add fedora lima for testing - (a753d06) - containerscrew
+- new version 0.4.0 - (1c0317b) - containerscrew
+- add stage dependency in ci-cd pipeline - (2fd8250) - containerscrew
+- add aes-gcm stream - (0a63ff6) - containerscrew
+- update ci-cd pipeline - (5fbe23d) - containerscrew
+- add publish to create in ci-cd pipeline & telegram notification - (52c789b) - containerscrew
+- remove packaging folder - (44697bc) - containerscrew
+
+- - -
+
+## 0.4.0 - 2026-03-22
+#### Features
+- implement aes gcm stream with 128kb & rayon threads & indicatif - (cf229cf) - containerscrew
+- implement aes gcm stream with 4kb - (50b3a33) - containerscrew
+#### Documentation
+- update README - (f8121d5) - containerscrew
+- update README.md - (581c415) - containerscrew
+#### Build system
+- fix rpm installation command - (9bd99c9) - containerscrew
+#### Miscellaneous Chores
+- (**deps**) bump clap from 4.5.60 to 4.6.0 - (6436f01) - dependabot[bot]
+- (**deps**) bump assert_cmd from 2.1.2 to 2.2.0 - (0a8b521) - dependabot[bot]
+- (**deps**) bump tempfile from 3.26.0 to 3.27.0 - (a71b6c9) - dependabot[bot]
 - (**version**) 0.4.0 - (c57159a) - containerscrew
 - (**version**) 0.4.0 - (e593018) - containerscrew
 - fix pipeline build stage - (e72dd99) - containerscrew

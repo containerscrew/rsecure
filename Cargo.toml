@@ -10,7 +10,7 @@ license-file = "LICENSE"
 
 [dependencies]
 aes-gcm = { version = "0.10.3", features = ["stream"] }
-clap = { version = "4.6.0", features = ["derive"] }
+clap = { version = "4.6.1", features = ["derive"] }
 anyhow = "1.0.102"
 walkdir = "2.3.3"
 rayon = "1.12.0"

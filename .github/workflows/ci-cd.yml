@@ -15,14 +15,36 @@ on:
       - ".github/workflows/ci-cd.yml"
       - "Cargo.toml"
       - "Cargo.lock"
+      - "deny.toml"
       - ".goreleaser.yaml"
     branches:
       - main
       - dependabot/*
     tags:
       - "*.*.*"
+  schedule:
+    # Weekly run so new RustSec advisories surface even without a code change
+    - cron: "0 7 * * 1"
 
 jobs:
+  security:
+    name: Security audit
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: cargo-audit (RustSec advisories)
+        uses: rustsec/audit-check@v2.0.0
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: cargo-deny (advisories + licenses + sources + bans)
+        uses: EmbarkStudios/cargo-deny-action@v2
+        with:
+          command: check
+          arguments: --all-features
+
   linting:
     name: Linting
     runs-on: ubuntu-latest

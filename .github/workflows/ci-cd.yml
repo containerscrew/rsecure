@@ -55,12 +55,21 @@ jobs:
       - name: Rustup
         run: |
           rustup default ${{ env.RUST_VERSION }}
+          rustup component add clippy rustfmt
+
+      - name: Cache cargo registry and target
+        uses: Swatinem/rust-cache@v2
+        with:
+          shared-key: linting
 
       - name: Rustfmt
         run: cargo fmt --all -- --check
 
       - name: Check
         run: cargo check --all -q
+
+      - name: Clippy
+        run: cargo clippy --all-targets --all-features -- -D warnings
 
   test:
     name: Test
@@ -72,6 +81,11 @@ jobs:
       - name: Rustup
         run: |
           rustup default ${{ env.RUST_VERSION }}
+
+      - name: Cache cargo registry and target
+        uses: Swatinem/rust-cache@v2
+        with:
+          shared-key: test
 
       - name: Test
         run: cargo test --all -q
@@ -108,13 +122,21 @@ jobs:
         run: |
           sudo apt-get -y install linux-headers-$(uname -r)
 
-      - name: Build
+      - name: Rustup
         run: |
           rustup update
           rustup default ${{ env.RUST_VERSION }}
           rustup target add ${{ matrix.platform.target }}
           rustc --version
-          cargo build --release --target ${{ matrix.platform.target }}
+
+      - name: Cache cargo registry and target
+        uses: Swatinem/rust-cache@v2
+        with:
+          shared-key: build-${{ matrix.platform.target }}
+          key: ${{ matrix.platform.target }}
+
+      - name: Build
+        run: cargo build --release --target ${{ matrix.platform.target }}
 
   goreleaser:
     name: Publish release with goreleaser

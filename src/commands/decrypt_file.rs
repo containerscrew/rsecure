@@ -79,7 +79,7 @@ pub fn run(enc_args: EncryptionArgs) -> Result<()> {
             .filter_map(|e| e.ok())
             .filter(|e| {
                 let path = e.path();
-                path.is_file() && path.extension().map_or(false, |ext| ext == "enc")
+                path.is_file() && path.extension().is_some_and(|ext| ext == "enc")
             })
             .map(|e| e.path().to_string_lossy().to_string())
             .collect();

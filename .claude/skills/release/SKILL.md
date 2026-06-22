@@ -1,22 +1,36 @@
 ---
 name: release
-description: Cut the next release of rsecure. Triggers when the user asks to "release", "cut a release", "bump version", "generate the next release", or similar. Reads the latest git tag, verifies it matches Cargo.toml, proposes the next version from conventional commits since the tag, edits Cargo.toml, commits, then runs `cog bump --version` to update the changelog and tag.
+description: Cut the next release of rsecure. Triggers when the user asks to "release", "cut a release", "bump version", "generate the next release", or similar. Reads the latest git tag, verifies it matches Cargo.toml, proposes the next version from conventional commits since the tag, then runs `cog bump --version` which handles Cargo.toml, Cargo.lock, CHANGELOG.md, the bump commit, the tag, and the tag push in one step.
 ---
 
 # Release process
 
-Use this exact workflow whenever the user asks to release a new version of `rsecure`.
+Use this workflow whenever the user asks to release a new version of `rsecure`.
+
+## How automation works
+
+The heavy lifting is done by `cog bump --version X.Y.Z` (cocogitto), which is wired in `cog.toml` to:
+
+1. **`pre_bump_hooks`**:
+   - `cargo set-version {{version}}` — updates `Cargo.toml`
+   - `cargo update --workspace --offline` — keeps `Cargo.lock` in sync
+   - `cog changelog` — regenerates `CHANGELOG.md`
+2. Cocogitto creates the bump commit `chore(version): X.Y.Z` with all of the above.
+3. The repo's `post-commit` hook auto-pushes the commit to `origin/main`.
+4. Cocogitto creates the tag `X.Y.Z`.
+5. **`post_bump_hooks`**: `git push origin {{version}}` — pushes the tag.
+
+Net result: a single `cog bump --version X.Y.Z` produces a fully released and pushed version. The skill exists to pick the right `X.Y.Z` and verify state before/after.
 
 ## Conventions
 
-- Tags are plain SemVer with no `v` prefix (e.g. `0.4.0`, not `v0.4.0`). See `git tag --sort=-v:refname`.
-- The version in `Cargo.toml` MUST match the latest git tag at all times — when they diverge, stop and surface it to the user before doing anything else.
-- Cocogitto runs `pre-commit.sh` on every commit (which auto-pushes), so explicit `git push` calls are usually redundant — but still verify the push landed.
-- The `cog bump` commit follows the convention `chore(version): X.Y.Z` (see existing history).
+- Tags are plain SemVer with no `v` prefix (e.g. `0.4.1`, not `v0.4.1`).
+- The version in `Cargo.toml` MUST match the latest git tag at all times. The automation guarantees this — if you ever see them diverge, something failed mid-way; stop and investigate.
+- Required tools: `cog` (cocogitto 7+) and `cargo-set-version` (from `cargo-edit`). If either is missing, stop and ask the user to install — do not try to substitute manual edits.
 
 ## Steps
 
-### 1. Read current state
+### 1. Pre-flight
 
 Run in parallel:
 
@@ -24,64 +38,49 @@ Run in parallel:
 git describe --tags --abbrev=0          # latest tag
 grep '^version' Cargo.toml              # current Cargo.toml version
 git status                              # must be clean
+which cog && which cargo-set-version    # tools must be present
 ```
 
-If the working tree is dirty, stop and ask the user to commit or stash first.
+- Working tree must be clean.
+- Latest tag MUST equal the `Cargo.toml` version. If not, STOP and surface to the user.
 
-### 2. Verify tag and Cargo.toml agree
-
-If the latest tag does NOT match the `version = "X.Y.Z"` line in `Cargo.toml`, STOP. Report the mismatch to the user and ask how to proceed — do not guess.
-
-### 3. Propose the next version
+### 2. Propose the next version
 
 List conventional commits since the latest tag:
 
 ```bash
-git log <latest-tag>..HEAD --oneline
+git log <latest-tag>..HEAD --oneline --no-merges
 ```
 
 Categorize them and suggest a bump:
 
 - Any `feat:` or `feat(scope):` → **minor** bump
-- Only `fix:`, `chore:`, `docs:`, `refactor:`, `perf:`, `test:` → **patch** bump
+- Only `fix:`, `chore:`, `docs:`, `refactor:`, `perf:`, `test:`, `build:`, `ci:` → **patch** bump
 - Any `!` breaking marker or `BREAKING CHANGE:` footer → **major** bump
 
-Show the user the commit list and the suggested next version. Wait for confirmation (they may override patch ↔ minor).
+Show the user the commit list and the suggested next version. Wait for confirmation (they may override).
 
-### 4. Edit Cargo.toml
-
-Update the `version` field in `Cargo.toml` to the agreed version. Do not touch anything else.
-
-### 5. Commit the Cargo.toml bump
-
-```bash
-git add Cargo.toml
-cog commit chore "bump version to X.Y.Z" version
-```
-
-That produces `chore(version): bump version to X.Y.Z`. The `pre-commit.sh` hook will push automatically.
-
-### 6. Run `cog bump`
+### 3. Run the bump
 
 ```bash
 cog bump --version X.Y.Z
 ```
 
-This regenerates `CHANGELOG.md` (via the `pre_bump_hooks = ["cog changelog"]` in `cog.toml`), creates the `chore(version): X.Y.Z` bump commit, and tags it `X.Y.Z`.
+This single command handles everything: Cargo.toml, Cargo.lock, CHANGELOG.md, the bump commit, push of commit, tag, push of tag.
 
-### 7. Push the tag
-
-The pre-commit hook may not push tags. Verify with:
+### 4. Verify
 
 ```bash
-git push --tags
-git status
+git describe --tags --abbrev=0          # should equal X.Y.Z
+grep '^version' Cargo.toml              # should equal X.Y.Z
+git status                              # must be clean
+git ls-remote --tags origin X.Y.Z       # must show the tag on remote
 ```
 
-### 8. Report back
+### 5. Report back
 
 Tell the user:
-- The new version
-- The new tag
-- The commit SHAs created
+- The new version and tag
+- The bump commit SHA
+- The CHANGELOG.md additions (a short summary, not the full diff)
 - A reminder to check the GitHub release / CI if applicable

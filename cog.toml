@@ -6,7 +6,12 @@ disable_bump_commit = false
 branch_whitelist = ["main"]
 skip_untracked = false
 
-pre_bump_hooks = ["cog changelog"]
+pre_bump_hooks = [
+    "cargo set-version {{version}}",
+    "cargo update --workspace --offline",
+    "cog changelog",
+]
+post_bump_hooks = ["git push origin {{version}}"]
 
 [git_hooks]
 [git_hooks.pre-commit]

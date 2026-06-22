@@ -8,6 +8,49 @@
 - update changelog for v0.2.0 - (53584da) - containerscrew
 
 - - -
+## 0.4.1 - 2026-06-22
+#### Features
+- implement aes gcm stream with 128kb & rayon threads & indicatif - (cf229cf) - containerscrew
+- implement aes gcm stream with 4kb - (50b3a33) - containerscrew
+#### Documentation
+- add optional Claude Code skills pack reference - (d66bb4b) - containerscrew
+- update README - (f8121d5) - containerscrew
+- update README.md - (581c415) - containerscrew
+#### Build system
+- fix rpm installation command - (9bd99c9) - containerscrew
+#### Miscellaneous Chores
+- (**deps**) update Cargo.lock dependencies - (71ef791) - containerscrew
+- (**deps**) bump assert_cmd from 2.2.1 to 2.2.2 - (64e6342) - dependabot[bot]
+- (**deps**) bump assert_cmd from 2.2.0 to 2.2.1 - (9610c6c) - dependabot[bot]
+- (**deps**) bump clap from 4.6.0 to 4.6.1 - (963e987) - dependabot[bot]
+- (**deps**) bump rayon from 1.11.0 to 1.12.0 - (24b268d) - dependabot[bot]
+- (**deps**) bump clap from 4.5.60 to 4.6.0 - (6436f01) - dependabot[bot]
+- (**deps**) bump assert_cmd from 2.1.2 to 2.2.0 - (0a8b521) - dependabot[bot]
+- (**deps**) bump tempfile from 3.26.0 to 3.27.0 - (a71b6c9) - dependabot[bot]
+- (**version**) 0.4.0 - (97dc9b8) - containerscrew
+- (**version**) 0.4.0 - (f0f1ae6) - containerscrew
+- (**version**) 0.4.0 - (c57159a) - containerscrew
+- (**version**) 0.4.0 - (e593018) - containerscrew
+- remove empty packages section from cog config - (5b7b900) - containerscrew
+- remove .cargo/ dir - (b0e5135) - containerscrew
+- fix pipeline build stage - (e72dd99) - containerscrew
+- fix pipeline build stage - (b8adaa4) - containerscrew
+- update checkout action version - (e944cfe) - containerscrew
+- update ci-cd pipeline - (88377b1) - containerscrew
+- update checkout action version & rustup default stable - (35f049f) - containerscrew
+- remove telegram notification from ci-cd pipeline - (3fa7123) - containerscrew
+- update rust version - (9bf09ec) - containerscrew
+- remove comment - (d97eafd) - containerscrew
+- add fedora lima for testing - (a753d06) - containerscrew
+- new version 0.4.0 - (1c0317b) - containerscrew
+- add stage dependency in ci-cd pipeline - (2fd8250) - containerscrew
+- add aes-gcm stream - (0a63ff6) - containerscrew
+- update ci-cd pipeline - (5fbe23d) - containerscrew
+- add publish to create in ci-cd pipeline & telegram notification - (52c789b) - containerscrew
+- remove packaging folder - (44697bc) - containerscrew
+
+- - -
+
 ## 0.4.0 - 2026-03-22
 #### Features
 - implement aes gcm stream with 128kb & rayon threads & indicatif - (cf229cf) - containerscrew

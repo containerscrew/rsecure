@@ -84,7 +84,7 @@ brew install --cask rsecure
 xattr -d com.apple.quarantine /opt/homebrew/bin/rsecure
 ```
 
-> If you still have issues, install via `cargo` or download the binary from the [releases page](https://github.com/containerscrew/rsecure/releases).
+> If you still have issues, install via [`cargo`](#using-cargo) or use the [universal install script](#universal-install-script).
 
 ### Using [`cargo`](https://rustup.rs/)
 

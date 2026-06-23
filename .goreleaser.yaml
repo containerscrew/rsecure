@@ -69,15 +69,13 @@ changelog:
       - "^docs:"
       - "^test:"
 
-homebrew_casks:
+brews:
   - name: rsecure
-    binaries:
-      - rsecure
-    url:
-      template: "https://github.com/containerscrew/rsecure/releases/download/{{ .Tag }}/{{ .ArtifactName }}"
-      verified: "github.com/containerscrew/rsecure/"
     homepage: "https://github.com/containerscrew/rsecure"
     description: "Secure file encryption using pure Rust and AES"
+    license: "GPL-3.0-or-later"
+
+    directory: Formula
 
     commit_author:
       name: goreleaserbot
@@ -88,6 +86,12 @@ homebrew_casks:
       name: homebrew-tap
       branch: main
       token: "{{ .Env.HOMEBREW_TAP_TOKEN }}"
+
+    install: |
+      bin.install "rsecure"
+
+    test: |
+      system "#{bin}/rsecure --version"
 
 
 source:

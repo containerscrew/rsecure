@@ -76,18 +76,11 @@ paru -S rsecure # or yay -S rsecure
 ### Homebrew
 
 ```bash
-brew tap containerscrew/tap
-brew install --cask rsecure
+brew install containerscrew/tap/rsecure
 ```
 
-> [!WARNING]
-> The binary is not signed by Apple. After installing, remove the quarantine attribute:
-
-```bash
-xattr -d com.apple.quarantine /opt/homebrew/bin/rsecure
-```
-
-> If you still have issues, install via [`cargo`](#using-cargo) or use the [universal install script](#universal-install-script).
+> [!NOTE]
+> If you installed an older version via `brew install --cask rsecure`, run `brew uninstall --cask rsecure` first — `rsecure` is now distributed as a Homebrew formula, which avoids the macOS Gatekeeper quarantine that affected the cask.
 
 ### Using [`cargo`](https://rustup.rs/)
 

@@ -7,6 +7,9 @@ rust-version = "1.94.0"
 description = "A simple file encryption and decryption tool using AES-GCM."
 repository = "https://github.com/containerscrew/rsecure"
 license-file = "LICENSE"
+readme = "README.md"
+keywords = ["encryption", "aes-gcm", "cli", "security", "cryptography"]
+categories = ["command-line-utilities", "cryptography"]
 
 [dependencies]
 aes-gcm = { version = "0.10.3", features = ["stream"] }

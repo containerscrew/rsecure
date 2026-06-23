@@ -1,10 +1,12 @@
 # rsecure
 
-`rsecure` is a simple and secure command-line tool for AES-GCM file encryption and decryption, built in pure Rust. Ideal for protecting sensitive files, backups, and personal data.
+`rsecure` is a simple and secure command-line tool for AES-256-GCM file encryption and decryption, built in pure Rust. Ideal for protecting sensitive files, backups, and personal data.
 
 `rsecure` uses `stream` encryption and `rayon` parallelism. The speed of the encryption also depends of your hardware specs (disk speed, CPU speed and number of cores).
 
 <p align="center" >
+    <a href="https://github.com/containerscrew/rsecure/actions/workflows/ci-cd.yml"><img alt="CI" src="https://img.shields.io/github/actions/workflow/status/containerscrew/rsecure/ci-cd.yml?branch=main&label=CI"></a>
+    <a href="./CHANGELOG.md"><img alt="Changelog" src="https://img.shields.io/badge/changelog-md-blue"></a>
     <img alt="GitHub code size in bytes" src="https://img.shields.io/github/languages/code-size/containerscrew/rsecure">
     <img alt="GitHub last commit" src="https://img.shields.io/github/last-commit/containerscrew/rsecure">
     <img alt="GitHub issues" src="https://img.shields.io/github/issues/containerscrew/rsecure">
@@ -22,33 +24,53 @@
 
 ---
 
-![example](./example.png)
+![rsecure CLI screenshot showing an encrypt run with progress bar](./example.png)
 
 ---
 
-# Installation
+## Quickstart
+
+```bash
+# 1. Install
+curl --proto '=https' --tlsv1.2 -sSfL https://raw.githubusercontent.com/containerscrew/rsecure/main/install.sh | sh
+
+# 2. Generate a key (store it somewhere safe!)
+rsecure create-key -o ~/rsecure.key
+
+# 3. Encrypt a file (produces secret.txt.enc next to it)
+rsecure encrypt -p ~/rsecure.key -s ./secret.txt
+
+# 4. Decrypt it back
+rsecure decrypt -p ~/rsecure.key -s ./secret.txt.enc
+```
+
+> [!WARNING]
+> If you lose the key, the encrypted data is unrecoverable. Read the [Security](#security) section before storing real data.
+
+## Installation
+
+### Universal install script
 
 ```shell
 curl --proto '=https' --tlsv1.2 -sSfL https://raw.githubusercontent.com/containerscrew/rsecure/main/install.sh | sh
 ```
 
-Specific version:
+Pin a specific release by appending `-s -- -v <version>`:
 
 ```shell
-curl --proto '=https' --tlsv1.2 -sSfL https://raw.githubusercontent.com/containerscrew/rsecure/main/install.sh | sh -s -- -v "0.3.0"
+curl --proto '=https' --tlsv1.2 -sSfL https://raw.githubusercontent.com/containerscrew/rsecure/main/install.sh | sh -s -- -v <version>
 ```
 
 > [!NOTE]
-> The installation script automatic detects your `OS` and `ARCH` and install the correct binary for you (rpm, deb, apk or just a binary in `/usr/local/bin`). In alpine, install the package `apk add gcompat
-` sine the binary is built with `glibc` and alpine uses `musl`.
+> The installation script automatically detects your `OS` and `ARCH` and installs the correct binary (rpm, deb, apk, or just a binary in `/usr/local/bin`). On Alpine, install `apk add gcompat` since the binary is built with `glibc` and Alpine uses `musl`.
 
-## AUR (Arch Linux)
+### AUR (Arch Linux)
 
 ```bash
 paru -S rsecure # or yay -S rsecure
 ```
 
-## Homebrew
+### Homebrew
 
 ```bash
 brew tap containerscrew/tap
@@ -56,22 +78,22 @@ brew install --cask rsecure
 ```
 
 > [!WARNING]
-> Since this binary is not signed by the Apple ecosystem, you will need to run the following command to allow it to run on your system.
+> The binary is not signed by Apple. After installing, remove the quarantine attribute:
 
 ```bash
 xattr -d com.apple.quarantine /opt/homebrew/bin/rsecure
 ```
 
-> If you still have issues running the binary, I recommend using the `cargo` installation method or downloading the binary from the [releases page](https://github.com/containerscrew/rsecure/releases). Use the first method (installing via `curl` and the `install.sh` script).
+> If you still have issues, install via `cargo` or download the binary from the [releases page](https://github.com/containerscrew/rsecure/releases).
 
-## Using [`cargo`](https://rustup.rs/)
+### Using [`cargo`](https://rustup.rs/)
 
 ```bash
 cargo install rsecure
-cargo install rsecure@0.3.3 # specific version
+cargo install rsecure --version <version>   # pin a specific release
 ```
 
-## Local build
+### Local build
 
 ```bash
 git clone https://github.com/containerscrew/rsecure.git
@@ -80,9 +102,9 @@ cargo build --release
 sudo cp ./target/release/rsecure /usr/local/bin/
 ```
 
-# Usage
+## Usage
 
-## Commands
+### Commands
 
 | Command                                                                                  | Description                                                          |
 | ---------------------------------------------------------------------------------------- | -------------------------------------------------------------------- |
@@ -112,7 +134,15 @@ sudo rsecure encrypt -p /root/rsecure.key -s /home/dcr/Documents/PrivateDocument
 > By default, `rsecure` will not delete the source plain files after encryption to avoid data loss.
 > If you want to delete the source files after encryption, use `-r` flag.
 
-# Local dev
+## Security
+
+`rsecure` encrypts file contents with **AES-256-GCM** via the audited [`aes-gcm`](https://crates.io/crates/aes-gcm) crate from [RustCrypto](https://github.com/RustCrypto), using the STREAM construction (`EncryptorBE32`) over 128 KiB chunks. The crate forbids `unsafe` code at the root (`#![forbid(unsafe_code)]`), and the dependency tree is continuously checked against the [RustSec Advisory Database](https://rustsec.org/) by `cargo-audit` and `cargo-deny` in CI.
+
+Read [`SECURITY.md`](./SECURITY.md) for the full threat model — what `rsecure` does and does not protect against, the exact cryptographic parameters, and key custody guidance.
+
+To report a vulnerability, please use [GitHub Security Advisories](https://github.com/containerscrew/rsecure/security/advisories/new) — do **not** open a public issue.
+
+## Local dev
 
 Testing encryption and decryption:
 
@@ -126,7 +156,7 @@ rsecure decrypt -p /var/tmp/rsecure.key -s /var/tmp/dummy_files/
 
 > Edit the `fake_data.sh` script to create different types of files and directories for testing.
 
-## Benchmark (hyperfine)
+### Benchmark (hyperfine)
 
 ```bash
 cargo install hyperfine
@@ -134,10 +164,6 @@ hyperfine --runs 5 'rsecure encrypt -p /var/tmp/rsecure.key -s /var/tmp/dummy_fi
 hyperfine --runs 5 'rsecure decrypt -p /var/tmp/rsecure.key -s /var/tmp/dummy_files/'
 ```
 
-# TODO
+## License
 
-- Add support for `zip` and `tar` archives.
-
-# License
-
-**`rsecure`** is distributed under the terms of the [GPL3](./LICENSE) license.
+`rsecure` is distributed under the terms of the [GPLv3](./LICENSE) license.

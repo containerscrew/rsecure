@@ -11,7 +11,13 @@ pre_bump_hooks = [
     "cargo update --workspace --offline",
     "cog changelog",
 ]
-post_bump_hooks = ["git push origin {{version}}"]
+post_bump_hooks = [
+    # cog creates the bump commit directly via git2, which does not fire the
+    # local `post-commit` hook (the one that auto-pushes main). Push it
+    # explicitly here so the bump commit and its tag both land on the remote.
+    "git push origin main",
+    "git push origin {{version}}",
+]
 
 [git_hooks]
 [git_hooks.pre-commit]

@@ -16,9 +16,10 @@ The heavy lifting is done by `cog bump --version X.Y.Z` (cocogitto), which is wi
    - `cargo update --workspace --offline` — keeps `Cargo.lock` in sync
    - `cog changelog` — regenerates `CHANGELOG.md`
 2. Cocogitto creates the bump commit `chore(version): X.Y.Z` with all of the above.
-3. The repo's `post-commit` hook auto-pushes the commit to `origin/main`.
-4. Cocogitto creates the tag `X.Y.Z`.
-5. **`post_bump_hooks`**: `git push origin {{version}}` — pushes the tag.
+3. Cocogitto creates the tag `X.Y.Z`.
+4. **`post_bump_hooks`**:
+   - `git push origin main` — pushes the bump commit (cog creates the commit via git2 directly, bypassing the local `post-commit` hook that would otherwise push it)
+   - `git push origin {{version}}` — pushes the tag
 
 Net result: a single `cog bump --version X.Y.Z` produces a fully released and pushed version. The skill exists to pick the right `X.Y.Z` and verify state before/after.
 

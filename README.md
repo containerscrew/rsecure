@@ -34,14 +34,17 @@
 # 1. Install
 curl --proto '=https' --tlsv1.2 -sSfL https://raw.githubusercontent.com/containerscrew/rsecure/main/install.sh | sh
 
-# 2. Generate a key (store it somewhere safe!)
-rsecure create-key -o ~/rsecure.key
+# 2. Generate a demo key (for real use, store the key on a USB drive or password manager!)
+rsecure create-key -o /tmp/rsecure.key
 
-# 3. Encrypt a file (produces secret.txt.enc next to it)
-rsecure encrypt -p ~/rsecure.key -s ./secret.txt
+# 3. Create a test file
+echo "hello rsecure" > /tmp/secret.txt
 
-# 4. Decrypt it back
-rsecure decrypt -p ~/rsecure.key -s ./secret.txt.enc
+# 4. Encrypt it (-r removes the plaintext after encryption)
+rsecure encrypt -p /tmp/rsecure.key -s /tmp/secret.txt -r
+
+# 5. Decrypt it back
+rsecure decrypt -p /tmp/rsecure.key -s /tmp/secret.txt.enc
 ```
 
 > [!WARNING]

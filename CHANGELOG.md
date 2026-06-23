@@ -8,6 +8,30 @@
 - update changelog for v0.2.0 - (53584da) - containerscrew
 
 - - -
+## 0.5.0 - 2026-06-23
+#### Features
+- (**cli**) colorize success and error output in the CLI - (2fb8865) - containerscrew
+- (**packaging**) distribute via Homebrew formula instead of cask - (08df8f1) - containerscrew
+#### Bug Fixes
+- (**security**) whitelist rsecure GPL-3.0-or-later in cargo-deny exceptions - (b1443a3) - containerscrew
+#### Documentation
+- (**agents**) add AGENTS.md as multi-agent project context - (2a84880) - containerscrew
+- (**readme**) make Quickstart fully runnable using /tmp paths and -r flag - (e5c0bb6) - containerscrew
+- (**readme**) replace static screenshot with animated demo GIF - (33964dc) - containerscrew
+- (**readme**) point Homebrew fallback to cargo or curl install instead of releases page - (373cb42) - containerscrew
+- (**readme**) polish README with quickstart, security section, and badges - (888b114) - containerscrew
+#### Continuous Integration
+- add Swatinem rust-cache and clippy step - (3d13b4d) - containerscrew
+#### Refactoring
+- address clippy lints (needless_borrow, unnecessary_map_or) - (873dfd0) - containerscrew
+#### Miscellaneous Chores
+- (**packaging**) add crates.io keywords, categories, and readme metadata - (0690dae) - containerscrew
+- (**release**) automate version bump with cargo-edit hook - (67b0516) - containerscrew
+- (**security**) add supply-chain checks, forbid unsafe, document threat model - (ebaf911) - containerscrew
+- sync Cargo.lock to 0.4.1 - (7e22923) - containerscrew
+
+- - -
+
 ## 0.4.1 - 2026-06-22
 #### Features
 - implement aes gcm stream with 128kb & rayon threads & indicatif - (cf229cf) - containerscrew

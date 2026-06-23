@@ -8,6 +8,7 @@ use aes_gcm::aead::rand_core::RngCore;
 use aes_gcm::aead::stream;
 use aes_gcm::{Aes256Gcm, KeyInit, aead::OsRng};
 use anyhow::Result;
+use console::style;
 use indicatif::{ProgressBar, ProgressStyle};
 use rayon::iter::{IntoParallelIterator, ParallelIterator};
 use walkdir::WalkDir;
@@ -101,7 +102,12 @@ pub fn run(enc_args: EncryptionArgs) -> Result<()> {
         files_to_process.into_par_iter().for_each(|file_path| {
             if let Err(e) = encrypt_file_stream(&key_bytes, &file_path, enc_args.common.remove_file)
             {
-                eprintln!("Failed to encrypt {}: {}", file_path, e);
+                eprintln!(
+                    "{} Failed to encrypt {}: {}",
+                    style("✗").red().bold(),
+                    style(&file_path).bold(),
+                    e,
+                );
             }
             // Update progress bar
             pb.inc(1);
@@ -118,7 +124,11 @@ pub fn run(enc_args: EncryptionArgs) -> Result<()> {
             )?;
         }
     } else {
-        eprintln!("Path '{}' is not valid.", enc_args.common.source);
+        eprintln!(
+            "{} Path '{}' is not valid.",
+            style("✗").red().bold(),
+            style(&enc_args.common.source).bold(),
+        );
     }
 
     Ok(())

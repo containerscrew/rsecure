@@ -7,6 +7,7 @@ use crate::utils::{is_dir, is_file};
 use aes_gcm::aead::stream;
 use aes_gcm::{Aes256Gcm, KeyInit};
 use anyhow::Result;
+use console::style;
 use indicatif::{ProgressBar, ProgressStyle};
 use rayon::iter::{IntoParallelIterator, ParallelIterator};
 use walkdir::WalkDir;
@@ -94,7 +95,12 @@ pub fn run(enc_args: EncryptionArgs) -> Result<()> {
         // Process files in parallel
         files_to_process.into_par_iter().for_each(|file_path| {
             if let Err(e) = decrypt_file_stream(&key_bytes, &file_path) {
-                eprintln!("Failed to decrypt {}: {}", file_path, e);
+                eprintln!(
+                    "{} Failed to decrypt {}: {}",
+                    style("✗").red().bold(),
+                    style(&file_path).bold(),
+                    e,
+                );
             }
             // Update progress bar
             pb.inc(1);
@@ -105,7 +111,11 @@ pub fn run(enc_args: EncryptionArgs) -> Result<()> {
     } else if is_file(&enc_args.common.source) {
         decrypt_file_stream(&key_bytes, &enc_args.common.source)?;
     } else {
-        eprintln!("Path '{}' is not valid.", enc_args.common.source);
+        eprintln!(
+            "{} Path '{}' is not valid.",
+            style("✗").red().bold(),
+            style(&enc_args.common.source).bold(),
+        );
     }
 
     Ok(())

@@ -24,7 +24,7 @@
 
 ---
 
-![rsecure CLI screenshot showing an encrypt run with progress bar](./example.png)
+![rsecure CLI demo: generating a key, encrypting and decrypting files with a progress bar](./demo.gif)
 
 ---
 

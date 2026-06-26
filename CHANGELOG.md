@@ -8,6 +8,23 @@
 - update changelog for v0.2.0 - (53584da) - containerscrew
 
 - - -
+## 0.6.0 - 2026-06-26
+#### Features
+- (**crypto**) v3 file format with passphrase (Argon2id) mode - (2457505) - containerscrew
+- (**crypto**) v2 file format with HKDF subkey and AAD-bound header - (39322c9) - containerscrew
+#### Bug Fixes
+- (**ci**) correct crates.io typo, add --locked and rust-cache to publish job - (69ee3b6) - containerscrew
+- (**release**) push bump commit alongside tag in post_bump_hooks - (6e447f4) - containerscrew
+#### Documentation
+- (**agents**) require doc sweep on every code change - (ff3a418) - containerscrew
+- (**agents**) note v3 format, passphrase mode, and the new modules - (037768a) - containerscrew
+#### Refactoring
+- (**crypto**) component-aware exclude, atomic writes, .enc warning - (65afa8e) - containerscrew
+#### Style
+- apply cargo fmt - (85781ea) - containerscrew
+
+- - -
+
 ## 0.5.0 - 2026-06-23
 #### Features
 - (**cli**) colorize success and error output in the CLI - (2fb8865) - containerscrew

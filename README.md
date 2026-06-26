@@ -1,6 +1,6 @@
 # rsecure
 
-`rsecure` is a simple and secure command-line tool for AES-256-GCM file encryption and decryption, built in pure Rust. Each file is encrypted under a unique per-file subkey derived from your master key via HKDF-SHA256, eliminating any practical risk of nonce collision across files. Ideal for protecting sensitive files, backups, and personal data.
+`rsecure` is a simple and secure command-line tool for AES-256-GCM file encryption and decryption, built in pure Rust. You can use either a 32-byte key file (default) or a passphrase (Argon2id) as the credential. Each file is then encrypted under a unique per-file subkey derived via HKDF-SHA256, eliminating any practical risk of nonce collision across files. Ideal for protecting sensitive files, backups, and personal data.
 
 `rsecure` uses `stream` encryption and `rayon` parallelism. The speed of the encryption also depends of your hardware specs (disk speed, CPU speed and number of cores).
 
@@ -112,6 +112,8 @@ sudo cp ./target/release/rsecure /usr/local/bin/
 | `rsecure decrypt -p /mnt/myusb/rsecure.key -s /home/mydirectory/files/`                  | Decrypt all files in a directory                                     |
 | `rsecure encrypt -r -p /mnt/myusb/rsecure.key -s /home/rsecure/dirtoencrypt/`            | Encrypt and **remove** original files (plain text)                   |
 | `rsecure encrypt -p /mnt/myusb/rsecure.key -s /home/rsecure/dirtoencrypt -e '.git'`      | Encrypt all files in a directory excluding `.git/` files             |
+| `rsecure encrypt --passphrase -s /home/mydirectory/text_to_encrypt.txt`                  | Encrypt with a passphrase (Argon2id), no key file needed             |
+| `rsecure decrypt -s /home/mydirectory/text_to_encrypt.txt.enc`                           | Decrypt a passphrase-encrypted file (auto-detected, prompts for it)  |
 
 > [!WARNING]
 > Saving the key in the same local filesystem where you save the encrypted files is not a good idea.

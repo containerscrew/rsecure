@@ -37,6 +37,13 @@ pub struct EncryptionArgs {
         required = false
     )]
     pub exclude_dir: Option<Vec<String>>,
+
+    #[arg(
+        long = "passphrase",
+        default_value_t = false,
+        help = "Use a passphrase (Argon2id) instead of a key file. Prompts on stdin (no echo)."
+    )]
+    pub passphrase: bool,
 }
 
 #[derive(Debug, Args, Clone, PartialEq, Eq)]
@@ -50,9 +57,9 @@ pub struct CommonArgs {
     #[arg(
         short = 'p',
         long = "private-key-path",
-        help = "Path to the AES key file"
+        help = "Path to the AES key file (omit when using --passphrase)"
     )]
-    pub private_key_path: String,
+    pub private_key_path: Option<String>,
 
     #[arg(
         short = 's',

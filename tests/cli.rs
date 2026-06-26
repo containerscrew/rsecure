@@ -194,6 +194,73 @@ fn exclude_dir_matches_components_not_substrings() {
 }
 
 #[test]
+fn passphrase_roundtrip() {
+    // encrypt --passphrase prompts twice (passphrase + confirm). decrypt
+    // prompts once. rpassword reads from stdin when there's no TTY, so we
+    // pipe the passphrase via write_stdin.
+    let dir = tempdir().unwrap();
+    let file_path = dir.path().join("secret.txt");
+    let enc_path = dir.path().join("secret.txt.enc");
+
+    let plaintext: &[u8] = b"mensaje protegido por una passphrase";
+    fs::write(&file_path, plaintext).unwrap();
+
+    let pass = "MiContrasenya-42!\n";
+
+    cargo_bin_cmd!("rsecure")
+        .args(["encrypt", "--passphrase", "-s", file_path.to_str().unwrap()])
+        .write_stdin(format!("{pass}{pass}"))
+        .assert()
+        .success();
+    assert!(enc_path.exists());
+    assert!(file_path.exists(), "encrypt without -r preserves the source");
+
+    fs::remove_file(&file_path).unwrap();
+
+    cargo_bin_cmd!("rsecure")
+        .args(["decrypt", "-s", enc_path.to_str().unwrap()])
+        .write_stdin(pass)
+        .assert()
+        .success();
+
+    let decrypted = fs::read(&file_path).unwrap();
+    assert_eq!(decrypted.as_slice(), plaintext);
+}
+
+#[test]
+fn wrong_passphrase_fails_with_no_plaintext_leak() {
+    let dir = tempdir().unwrap();
+    let file_path = dir.path().join("secret.txt");
+    let enc_path = dir.path().join("secret.txt.enc");
+
+    let plaintext: &[u8] = b"datos protegidos por contrasenya";
+    fs::write(&file_path, plaintext).unwrap();
+
+    cargo_bin_cmd!("rsecure")
+        .args(["encrypt", "--passphrase", "-s", file_path.to_str().unwrap()])
+        .write_stdin("contrasenya-real\ncontrasenya-real\n")
+        .assert()
+        .success();
+
+    fs::remove_file(&file_path).unwrap();
+
+    cargo_bin_cmd!("rsecure")
+        .args(["decrypt", "-s", enc_path.to_str().unwrap()])
+        .write_stdin("contrasenya-mal\n")
+        .assert()
+        .failure();
+
+    assert!(
+        !file_path.exists(),
+        "wrong passphrase must not produce plaintext on disk"
+    );
+    assert!(
+        enc_path.exists(),
+        "encrypted file must be preserved on failure"
+    );
+}
+
+#[test]
 fn decrypt_fails_when_v2_header_is_tampered() {
     // The v2 header (magic + version + chunk_size + hkdf_salt) is bound to every
     // chunk's GCM tag via AAD. Flipping a single bit in the header — here, in

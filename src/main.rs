@@ -2,7 +2,9 @@
 
 mod cli;
 mod commands;
+mod crypto;
 mod file_ops;
+mod format;
 
 mod utils;
 

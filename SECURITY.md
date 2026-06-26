@@ -11,37 +11,62 @@ Check the latest release at https://github.com/containerscrew/rsecure/releases.
 
 ## Cryptographic Design
 
-### File format v2 (current)
+### File format v3 (current)
 
-| Element            | Value |
-|--------------------|-------|
-| Cipher             | AES-256-GCM (256-bit key, 128-bit tag) |
-| Construction       | STREAM (chunked AEAD) via `aes_gcm::aead::stream::EncryptorBE32` |
-| Chunk size         | 131072 bytes (128 KiB), declared per-file in the header |
-| Key derivation     | HKDF-SHA256(ikm=master_key, salt=random 32 B per file, info=`"rsecure-v2-aes256gcm-stream"`) → 32-byte AES-256 subkey |
-| STREAM nonce       | Fixed all-zero 7-byte salt; uniqueness is provided by the per-file HKDF subkey, with STREAM's 4-byte BE32 counter ensuring uniqueness across chunks within the file |
-| File header        | `RSEC` magic (4 B) + version byte (`0x02`) + chunk_size (u32 LE, 4 B) + HKDF salt (32 B) = **41 bytes** |
-| Header authenticity | The full 41-byte header is passed as AAD on every chunk; any tampering with magic, version, chunk_size, or salt invalidates the first chunk's GCM tag and decryption fails before any plaintext is recovered |
-| Master key storage | 32 random bytes from the OS RNG, written as plain bytes on disk at a location chosen by the user |
+| Element             | Value |
+|---------------------|-------|
+| Cipher              | AES-256-GCM (256-bit key, 128-bit tag) |
+| Construction        | STREAM (chunked AEAD) via `aes_gcm::aead::stream::EncryptorBE32` |
+| Chunk size          | 131072 bytes (128 KiB), declared per-file in the header |
+| Key derivation      | HKDF-SHA256(ikm=master_key, salt=random 32 B per file, info=`"rsecure-v3-aes256gcm-stream"`) → 32-byte AES-256 subkey |
+| STREAM nonce        | Fixed all-zero 7-byte salt; uniqueness is provided by the per-file HKDF subkey, with STREAM's 4-byte BE32 counter ensuring uniqueness across chunks within the file |
+| File header         | `RSEC` (4 B) + version `0x03` (1 B) + flags (1 B) + chunk_size (u32 LE, 4 B) + HKDF salt (32 B) = **42 bytes**; passphrase mode appends Argon2 params (9 B) + Argon2 salt (16 B) for **67 bytes** total |
+| Header authenticity | The entire on-disk header is passed as AAD on every chunk; any tampering invalidates the first GCM tag and decryption fails before any plaintext is recovered |
+| Master key source   | Either a 32-byte keyfile (default) or derived once-per-invocation from a passphrase via Argon2id, see below |
 
-Because the AES-256 subkey is unique per file (derived from a fresh 256-bit random salt),
-the `(key, nonce)` pair is globally unique across all files even with a fixed STREAM nonce.
-This eliminates the birthday-bound nonce-collision concern that would otherwise apply to
-AES-GCM's 96-bit nonce when many files are encrypted under the same master key.
+#### Master key sources
 
-On decrypt, a sanity bound (`chunk_size ≤ 16 MiB`) rejects pathological headers before
-any buffer is allocated, so a hostile `.enc` cannot trigger an unbounded allocation.
+`flags & 0x01 == 0` (**keyfile**): the master key is the 32-byte keyfile passed
+via `-p`. This is the strongest default — the master key has 256 bits of OS-RNG
+entropy.
 
-### File format v1 (legacy, decrypt-only)
+`flags & 0x01 == 1` (**passphrase**): the master key is derived via
+Argon2id(passphrase, argon2_salt, params) where the salt and parameters live in
+the file header. Default parameters: `m_cost = 19456 KiB (~19 MiB)`,
+`t_cost = 2`, `p_cost = 1`, output length 32 bytes. The salt is generated once
+per invocation, so an entire `encrypt` batch shares one Argon2 derivation; the
+decrypter caches by salt to avoid re-running the KDF on subsequent files of the
+same batch.
 
-Files produced by rsecure ≤ 0.5.0 use AES-256-GCM STREAM with a 7-byte random nonce derived
-directly from the master key, no HKDF, no magic header. `rsecure decrypt` still reads these
-— the absence of the `RSEC` magic switches the decryptor to the legacy path. New
-encryptions always use v2.
+**Security in passphrase mode is bounded by the entropy of your passphrase.**
+Argon2id raises the cost-per-attempt enough to make weak passphrases
+significantly harder to brute-force, but a 6-character dictionary word remains
+weak regardless of the KDF.
 
-The cryptographic primitives are provided by the [`aes-gcm`][aes-gcm-crate] and
-[`hkdf`][hkdf-crate] crates from [RustCrypto], widely-used, audited, pure-Rust
-implementations.
+Because the AES-256 subkey is unique per file (derived from a fresh 256-bit
+random salt), the `(key, nonce)` pair is globally unique across all files even
+with a fixed STREAM nonce. This eliminates the birthday-bound nonce-collision
+concern that would otherwise apply to AES-GCM's 96-bit nonce when many files
+are encrypted under the same master key.
+
+On decrypt, a sanity bound (`chunk_size ≤ 16 MiB`) rejects pathological headers
+before any buffer is allocated, so a hostile `.enc` cannot trigger an unbounded
+allocation.
+
+### File formats v1 and v2 (legacy, decrypt-only)
+
+- **v1** (rsecure ≤ 0.5.0): AES-256-GCM STREAM with a 7-byte random nonce
+  derived directly from the master key, no HKDF, no magic header.
+- **v2** (interim, brief release window before v3): `RSEC` `0x02` header,
+  HKDF-derived subkey, AAD-bound — same scheme as v3 keyfile mode but without
+  the flags byte.
+
+`rsecure decrypt` reads both transparently; the dispatcher picks the right
+code path from the magic + version. New encryptions always use v3.
+
+The cryptographic primitives are provided by the [`aes-gcm`][aes-gcm-crate],
+[`hkdf`][hkdf-crate], and [`argon2`][argon2-crate] crates from [RustCrypto],
+widely-used, audited, pure-Rust implementations.
 
 ## Threat Model
 
@@ -67,9 +92,10 @@ implementations.
 - **Key storage is the user's responsibility.** A master key file left on disk in
   plaintext offers no protection against an attacker with filesystem access. Use
   full-disk encryption, a hardware token, or a password manager for key custody.
-- **No forward secrecy / no post-compromise security.** If the master key is
-  compromised, all past and future ciphertext under that key is exposed (HKDF subkeys
-  are derived deterministically from the master key and the per-file salt).
+- **No forward secrecy / no post-compromise security.** If the master key (or
+  passphrase) is compromised, all past and future ciphertext under it is
+  exposed (HKDF subkeys are derived deterministically from the master key and
+  the per-file salt).
 - **No authenticated key exchange.** Distributing the master key to another party is
   out of scope; use an out-of-band secure channel (Signal, age, GPG, in person).
 - **No plausible deniability.** Encrypted files are clearly identifiable as such (`.enc`
@@ -81,7 +107,13 @@ implementations.
 - **Legacy v1 nonce collisions.** Files encrypted by rsecure ≤ 0.5.0 used a 7-byte
   random nonce (56 bits), which approaches the birthday bound around 2²⁸ files
   (~268M) and crosses NIST's 2⁻³² safety margin around ~6k files. Re-encrypt
-  long-lived v1 archives with the current version to migrate them to v2.
+  long-lived v1 archives with the current version to migrate them to v3.
+- **Passphrase strength.** In passphrase mode, the master key's effective
+  security is bounded by your passphrase's entropy. Argon2id raises the
+  per-attempt cost but cannot rescue a weak passphrase from an offline
+  brute-force attacker who obtains a `.enc` file. Use a key file for the
+  strongest guarantee, or a long, high-entropy passphrase (e.g., a diceware
+  phrase of 6+ words).
 
 ## Reporting a Vulnerability
 
@@ -106,4 +138,5 @@ before public disclosure.
 [aes-gcm]: https://en.wikipedia.org/wiki/Galois/Counter_Mode
 [aes-gcm-crate]: https://crates.io/crates/aes-gcm
 [hkdf-crate]: https://crates.io/crates/hkdf
+[argon2-crate]: https://crates.io/crates/argon2
 [RustCrypto]: https://github.com/RustCrypto

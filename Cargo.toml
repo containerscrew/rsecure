@@ -16,7 +16,7 @@ aes-gcm = { version = "0.10.3", features = ["stream"] }
 argon2 = "0.5.3"
 hkdf = "0.13.0"
 rpassword = "7.4.0"
-sha2 = "0.10.9"
+sha2 = "0.11.0"
 clap = { version = "4.6.1", features = ["derive"] }
 anyhow = "1.0.102"
 walkdir = "2.3.3"

@@ -1,5 +1,6 @@
 use std::fs::{self, File};
 use std::io::{Read, Write};
+use std::path::{Component, Path};
 
 use crate::cli::EncryptionArgs;
 use crate::file_ops::open_private_key;
@@ -32,8 +33,22 @@ const STREAM_SALT_LEN: usize = 7;
 const CHUNK_SIZE: u32 = 131072;
 const HEADER_LEN: usize = 4 + 1 + 4 + HKDF_SALT_LEN; // 41
 
-fn is_excluded_dir(path: &str, exclude_list: &[String]) -> bool {
-    exclude_list.iter().any(|ex| path.contains(ex))
+// Returns true if any path component matches an entry of `exclude_list`.
+// Trailing path separators on the patterns are stripped, so `-e .git` and
+// `-e .git/` behave the same. Component-based matching prevents the obvious
+// substring trap, e.g. `-e .git` no longer matches `forgit.txt` or `.github/`.
+fn is_excluded(path: &Path, exclude_list: &[String]) -> bool {
+    if exclude_list.is_empty() {
+        return false;
+    }
+    path.components().any(|c| match c {
+        Component::Normal(name) => name.to_str().is_some_and(|name| {
+            exclude_list
+                .iter()
+                .any(|ex| name == ex.trim_end_matches('/').trim_end_matches('\\'))
+        }),
+        _ => false,
+    })
 }
 
 fn derive_subkey(master_key: &[u8], salt: &[u8]) -> Result<[u8; 32]> {
@@ -54,6 +69,30 @@ fn build_header(version: u8, chunk_size: u32, hkdf_salt: &[u8; HKDF_SALT_LEN]) -
 }
 
 fn encrypt_file_stream(key_bytes: &[u8], source: &str, should_remove: bool) -> Result<()> {
+    let final_dest = format!("{}.enc", source);
+    let tmp_dest = format!("{}.enc.tmp", source);
+
+    // Write into a .tmp sibling so a mid-write crash never leaves a half-baked
+    // .enc file alongside its plaintext. fs::rename is atomic within the same
+    // filesystem; either the consumer sees the old absence or the fully-written
+    // ciphertext, never an in-between truncated file.
+    let result = encrypt_to_path(key_bytes, source, &tmp_dest);
+    match result {
+        Ok(()) => {
+            fs::rename(&tmp_dest, &final_dest)?;
+            if should_remove {
+                fs::remove_file(source)?;
+            }
+            Ok(())
+        }
+        Err(e) => {
+            let _ = fs::remove_file(&tmp_dest); // best-effort
+            Err(e)
+        }
+    }
+}
+
+fn encrypt_to_path(key_bytes: &[u8], source: &str, tmp_dest: &str) -> Result<()> {
     let mut hkdf_salt = [0u8; HKDF_SALT_LEN];
     OsRng.fill_bytes(&mut hkdf_salt);
 
@@ -66,9 +105,8 @@ fn encrypt_file_stream(key_bytes: &[u8], source: &str, should_remove: bool) -> R
 
     let header = build_header(FORMAT_VERSION_V2, CHUNK_SIZE, &hkdf_salt);
 
-    let dest = format!("{}.enc", source);
     let mut source_file = File::open(source)?;
-    let mut dest_file = File::create(&dest)?;
+    let mut dest_file = File::create(tmp_dest)?;
 
     dest_file.write_all(&header)?;
 
@@ -99,10 +137,6 @@ fn encrypt_file_stream(key_bytes: &[u8], source: &str, should_remove: bool) -> R
         }
     }
 
-    if should_remove {
-        fs::remove_file(source)?;
-    }
-
     Ok(())
 }
 
@@ -115,10 +149,7 @@ pub fn run(enc_args: EncryptionArgs) -> Result<()> {
             .filter_map(|e| e.ok())
             .filter(|e| e.path().is_file())
             .filter(|e| {
-                !is_excluded_dir(
-                    &e.path().to_string_lossy(),
-                    enc_args.exclude_dir.as_deref().unwrap_or(&[]),
-                )
+                !is_excluded(e.path(), enc_args.exclude_dir.as_deref().unwrap_or(&[]))
             })
             .map(|e| e.path().to_string_lossy().to_string())
             .filter(|path| !path.ends_with(".enc"))
@@ -145,7 +176,13 @@ pub fn run(enc_args: EncryptionArgs) -> Result<()> {
 
         pb.finish_with_message("Encryption complete");
     } else if is_file(&enc_args.common.source) {
-        if !enc_args.common.source.ends_with(".enc") {
+        if enc_args.common.source.ends_with(".enc") {
+            eprintln!(
+                "{} '{}' already has a .enc extension; refusing to re-encrypt.",
+                style("!").yellow().bold(),
+                style(&enc_args.common.source).bold(),
+            );
+        } else {
             encrypt_file_stream(
                 &key_bytes,
                 &enc_args.common.source,

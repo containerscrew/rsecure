@@ -144,6 +144,56 @@ fn decrypts_legacy_v1_aes_gcm_file() {
 }
 
 #[test]
+fn exclude_dir_matches_components_not_substrings() {
+    // Old behavior: -e .git used path.contains(".git") and would also exclude
+    // files like forgit.txt or anything inside .github/. New behavior matches
+    // single path components only.
+    let dir = tempdir().unwrap();
+    let key_path = dir.path().join("key.bin");
+    let root = dir.path().join("tree");
+
+    // Layout:
+    //   tree/.git/config         — excluded (component matches)
+    //   tree/.github/workflows.yml — NOT excluded (component is ".github")
+    //   tree/forgit.txt          — NOT excluded (component is "forgit.txt")
+    //   tree/keep/file.txt       — NOT excluded
+    fs::create_dir_all(root.join(".git")).unwrap();
+    fs::create_dir_all(root.join(".github")).unwrap();
+    fs::create_dir_all(root.join("keep")).unwrap();
+    fs::write(root.join(".git/config"), b"should be excluded").unwrap();
+    fs::write(root.join(".github/workflows.yml"), b"should be encrypted").unwrap();
+    fs::write(root.join("forgit.txt"), b"should be encrypted").unwrap();
+    fs::write(root.join("keep/file.txt"), b"should be encrypted").unwrap();
+
+    cargo_bin_cmd!("rsecure")
+        .args(["create-key", "-o", key_path.to_str().unwrap()])
+        .assert()
+        .success();
+
+    cargo_bin_cmd!("rsecure")
+        .args([
+            "encrypt",
+            "-p",
+            key_path.to_str().unwrap(),
+            "-s",
+            root.to_str().unwrap(),
+            "-e",
+            ".git",
+        ])
+        .assert()
+        .success();
+
+    // Excluded → no .enc produced; plaintext untouched.
+    assert!(root.join(".git/config").exists());
+    assert!(!root.join(".git/config.enc").exists());
+
+    // Not excluded → .enc produced.
+    assert!(root.join(".github/workflows.yml.enc").exists());
+    assert!(root.join("forgit.txt.enc").exists());
+    assert!(root.join("keep/file.txt.enc").exists());
+}
+
+#[test]
 fn decrypt_fails_when_v2_header_is_tampered() {
     // The v2 header (magic + version + chunk_size + hkdf_salt) is bound to every
     // chunk's GCM tag via AAD. Flipping a single bit in the header — here, in
@@ -202,10 +252,13 @@ fn decrypt_fails_when_v2_header_is_tampered() {
         .assert()
         .failure();
 
-    // Even if a partial dest was written before the auth check tripped, it
-    // must not equal the original plaintext.
-    if file_path.exists() {
-        let leaked = fs::read(&file_path).unwrap();
-        assert_ne!(leaked.as_slice(), payload);
-    }
+    // Atomic decrypt writes to <source>.dec.tmp and only renames on success,
+    // so a failed auth check must not leave any plaintext at the final path.
+    assert!(
+        !file_path.exists(),
+        "atomic decrypt must not leave partial plaintext after auth failure"
+    );
+    // The encrypted source must be preserved on failure (we only remove it on
+    // a clean rename).
+    assert!(enc_path.exists(), "source .enc must be preserved on failure");
 }

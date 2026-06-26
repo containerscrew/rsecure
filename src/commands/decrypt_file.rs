@@ -40,18 +40,36 @@ fn derive_subkey(master_key: &[u8], salt: &[u8]) -> Result<[u8; 32]> {
 }
 
 fn decrypt_file_stream(key_bytes: &[u8], source: &str) -> Result<()> {
-    let dest = if source.ends_with(".enc") {
+    let final_dest = if source.ends_with(".enc") {
         source.trim_end_matches(".enc").to_string()
     } else {
         format!("{}.dec", source)
     };
+    let tmp_dest = format!("{}.dec.tmp", source);
 
+    // Write into a .tmp sibling and rename only on full success, so a failed
+    // auth check or mid-stream crash never produces a half-decrypted plaintext
+    // that looks valid to a naive consumer.
+    match decrypt_to_path(key_bytes, source, &tmp_dest) {
+        Ok(()) => {
+            fs::rename(&tmp_dest, &final_dest)?;
+            fs::remove_file(source)?;
+            Ok(())
+        }
+        Err(e) => {
+            let _ = fs::remove_file(&tmp_dest);
+            Err(e)
+        }
+    }
+}
+
+fn decrypt_to_path(key_bytes: &[u8], source: &str, tmp_dest: &str) -> Result<()> {
     let mut source_file = File::open(source)?;
 
     let mut magic_buf = [0u8; 4];
     source_file.read_exact(&mut magic_buf)?;
 
-    let mut dest_file = File::create(&dest)?;
+    let mut dest_file = File::create(tmp_dest)?;
 
     if &magic_buf == MAGIC {
         // v2: full header, AAD-bound chunks
@@ -112,8 +130,6 @@ fn decrypt_file_stream(key_bytes: &[u8], source: &str) -> Result<()> {
 
         drive_decrypt_loop(&mut source_file, &mut dest_file, decryptor, &mut buffer, &[])?;
     }
-
-    fs::remove_file(source)?;
 
     Ok(())
 }

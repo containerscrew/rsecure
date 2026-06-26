@@ -1,6 +1,6 @@
 # rsecure
 
-`rsecure` is a simple and secure command-line tool for AES-256-GCM file encryption and decryption, built in pure Rust. Ideal for protecting sensitive files, backups, and personal data.
+`rsecure` is a simple and secure command-line tool for AES-256-GCM file encryption and decryption, built in pure Rust. Each file is encrypted under a unique per-file subkey derived from your master key via HKDF-SHA256, eliminating any practical risk of nonce collision across files. Ideal for protecting sensitive files, backups, and personal data.
 
 `rsecure` uses `stream` encryption and `rayon` parallelism. The speed of the encryption also depends of your hardware specs (disk speed, CPU speed and number of cores).
 
@@ -132,7 +132,7 @@ sudo rsecure encrypt -p /root/rsecure.key -s /home/dcr/Documents/PrivateDocument
 
 ## Security
 
-`rsecure` encrypts file contents with **AES-256-GCM** via the audited [`aes-gcm`](https://crates.io/crates/aes-gcm) crate from [RustCrypto](https://github.com/RustCrypto), using the STREAM construction (`EncryptorBE32`) over 128 KiB chunks. The crate forbids `unsafe` code at the root (`#![forbid(unsafe_code)]`), and the dependency tree is continuously checked against the [RustSec Advisory Database](https://rustsec.org/) by `cargo-audit` and `cargo-deny` in CI.
+`rsecure` encrypts file contents with **AES-256-GCM** via the audited [`aes-gcm`](https://crates.io/crates/aes-gcm) crate from [RustCrypto](https://github.com/RustCrypto), using the STREAM construction (`EncryptorBE32`) over 128 KiB chunks. For each file, a 32-byte random salt is generated and a unique AES-256 subkey is derived from the master key via [HKDF-SHA256](https://crates.io/crates/hkdf), so the `(key, nonce)` pair is globally unique and nonce-collision attacks against AES-GCM are not a concern in practice. Files written by rsecure ≤ 0.5.0 (no HKDF, 7-byte random nonce, no header) are still decrypted transparently — the `RSEC` magic header in new files distinguishes the two formats. The crate forbids `unsafe` code at the root (`#![forbid(unsafe_code)]`), and the dependency tree is continuously checked against the [RustSec Advisory Database](https://rustsec.org/) by `cargo-audit` and `cargo-deny` in CI.
 
 Read [`SECURITY.md`](./SECURITY.md) for the full threat model — what `rsecure` does and does not protect against, the exact cryptographic parameters, and key custody guidance.
 

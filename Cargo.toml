@@ -13,6 +13,8 @@ categories = ["command-line-utilities", "cryptography"]
 
 [dependencies]
 aes-gcm = { version = "0.10.3", features = ["stream"] }
+hkdf = "0.12.4"
+sha2 = "0.10.9"
 clap = { version = "4.6.1", features = ["derive"] }
 anyhow = "1.0.102"
 walkdir = "2.3.3"
@@ -27,3 +29,4 @@ strip = "debuginfo"
 tempfile = "3.27.0"
 assert_cmd = "2"
 predicates = "3"
+aes-gcm = { version = "0.10.3", features = ["stream"] }

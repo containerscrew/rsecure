@@ -1,5 +1,8 @@
+use aes_gcm::aead::stream::EncryptorBE32;
+use aes_gcm::{Aes256Gcm, KeyInit};
 use assert_cmd::cargo::cargo_bin_cmd;
 use std::fs;
+use std::io::{Read, Seek, SeekFrom, Write};
 use tempfile::tempdir;
 
 #[test]
@@ -12,7 +15,6 @@ fn encrypt_and_decrypt_single_file_roundtrip() {
 
     fs::write(&file_path, b"hola mundo secreto").unwrap();
 
-    // 1️⃣ create key
     cargo_bin_cmd!("rsecure")
         .args(["create-key", "-o", key_path.to_str().unwrap()])
         .assert()
@@ -20,7 +22,6 @@ fn encrypt_and_decrypt_single_file_roundtrip() {
 
     assert!(key_path.exists());
 
-    // 2️⃣ encrypt file
     cargo_bin_cmd!("rsecure")
         .args([
             "encrypt",
@@ -34,7 +35,6 @@ fn encrypt_and_decrypt_single_file_roundtrip() {
 
     assert!(enc_path.exists());
 
-    // 3️⃣ decrypt file
     cargo_bin_cmd!("rsecure")
         .args([
             "decrypt",
@@ -46,7 +46,166 @@ fn encrypt_and_decrypt_single_file_roundtrip() {
         .assert()
         .success();
 
-    // 4️⃣ verify content restored
     let decrypted = fs::read(&file_path).unwrap();
     assert_eq!(decrypted, b"hola mundo secreto");
+}
+
+#[test]
+fn encrypt_decrypt_roundtrip_multi_chunk() {
+    let dir = tempdir().unwrap();
+
+    let key_path = dir.path().join("key.bin");
+    let file_path = dir.path().join("big.bin");
+    let enc_path = dir.path().join("big.bin.enc");
+
+    // 320 KiB: spans 3 STREAM chunks (CHUNK_SIZE = 128 KiB) so we exercise both
+    // encrypt_next() and encrypt_last() paths under a single nonce salt.
+    let mut data = vec![0u8; 320 * 1024];
+    for (i, b) in data.iter_mut().enumerate() {
+        *b = (i % 251) as u8;
+    }
+    fs::write(&file_path, &data).unwrap();
+
+    cargo_bin_cmd!("rsecure")
+        .args(["create-key", "-o", key_path.to_str().unwrap()])
+        .assert()
+        .success();
+
+    cargo_bin_cmd!("rsecure")
+        .args([
+            "encrypt",
+            "-p",
+            key_path.to_str().unwrap(),
+            "-s",
+            file_path.to_str().unwrap(),
+        ])
+        .assert()
+        .success();
+
+    assert!(enc_path.exists());
+
+    cargo_bin_cmd!("rsecure")
+        .args([
+            "decrypt",
+            "-p",
+            key_path.to_str().unwrap(),
+            "-s",
+            enc_path.to_str().unwrap(),
+        ])
+        .assert()
+        .success();
+
+    let decrypted = fs::read(&file_path).unwrap();
+    assert_eq!(decrypted, data);
+}
+
+#[test]
+fn decrypts_legacy_v1_aes_gcm_file() {
+    // Files produced by rsecure <= 0.5.0 had no magic header: just 7 random
+    // nonce bytes followed by AES-256-GCM STREAM ciphertext. Construct one
+    // here and verify the current binary still decrypts it.
+    let dir = tempdir().unwrap();
+
+    let key_path = dir.path().join("key.bin");
+    let enc_path = dir.path().join("oldfile.txt.enc");
+    let dest_path = dir.path().join("oldfile.txt");
+
+    let key_bytes = [0x42u8; 32];
+    fs::write(&key_path, key_bytes).unwrap();
+
+    let payload = b"plaintext encrypted with rsecure 0.5.0 legacy format" as &[u8];
+
+    // Fixed nonce that does not collide with the v2 magic "RSEC".
+    let nonce: [u8; 7] = [0xDE, 0xAD, 0xBE, 0xEF, 0x00, 0x00, 0x00];
+
+    let key = aes_gcm::Key::<Aes256Gcm>::from_slice(&key_bytes);
+    let cipher = Aes256Gcm::new(key);
+    let encryptor = EncryptorBE32::from_aead(cipher, &nonce.into());
+    let ciphertext = encryptor.encrypt_last(payload).unwrap();
+
+    let mut f = fs::File::create(&enc_path).unwrap();
+    f.write_all(&nonce).unwrap();
+    f.write_all(&ciphertext).unwrap();
+    drop(f);
+
+    cargo_bin_cmd!("rsecure")
+        .args([
+            "decrypt",
+            "-p",
+            key_path.to_str().unwrap(),
+            "-s",
+            enc_path.to_str().unwrap(),
+        ])
+        .assert()
+        .success();
+
+    let decrypted = fs::read(&dest_path).unwrap();
+    assert_eq!(decrypted.as_slice(), payload);
+}
+
+#[test]
+fn decrypt_fails_when_v2_header_is_tampered() {
+    // The v2 header (magic + version + chunk_size + hkdf_salt) is bound to every
+    // chunk's GCM tag via AAD. Flipping a single bit in the header — here, in
+    // the chunk_size field at offset 5 — must make decryption fail with an
+    // auth error and a non-zero exit status.
+    let dir = tempdir().unwrap();
+
+    let key_path = dir.path().join("key.bin");
+    let file_path = dir.path().join("secret.txt");
+    let enc_path = dir.path().join("secret.txt.enc");
+
+    let payload: &[u8] = b"contenido legitimo que no debe descifrarse si alguien toca la cabecera";
+    fs::write(&file_path, payload).unwrap();
+
+    cargo_bin_cmd!("rsecure")
+        .args(["create-key", "-o", key_path.to_str().unwrap()])
+        .assert()
+        .success();
+
+    cargo_bin_cmd!("rsecure")
+        .args([
+            "encrypt",
+            "-p",
+            key_path.to_str().unwrap(),
+            "-s",
+            file_path.to_str().unwrap(),
+        ])
+        .assert()
+        .success();
+
+    // Remove the plaintext so we can detect any unauthorized recovery.
+    fs::remove_file(&file_path).unwrap();
+
+    // Flip one bit inside the chunk_size field (byte offset 5).
+    let mut enc_file = fs::OpenOptions::new()
+        .read(true)
+        .write(true)
+        .open(&enc_path)
+        .unwrap();
+    enc_file.seek(SeekFrom::Start(5)).unwrap();
+    let mut byte = [0u8; 1];
+    enc_file.read_exact(&mut byte).unwrap();
+    byte[0] ^= 0x01;
+    enc_file.seek(SeekFrom::Start(5)).unwrap();
+    enc_file.write_all(&byte).unwrap();
+    drop(enc_file);
+
+    cargo_bin_cmd!("rsecure")
+        .args([
+            "decrypt",
+            "-p",
+            key_path.to_str().unwrap(),
+            "-s",
+            enc_path.to_str().unwrap(),
+        ])
+        .assert()
+        .failure();
+
+    // Even if a partial dest was written before the auth check tripped, it
+    // must not equal the original plaintext.
+    if file_path.exists() {
+        let leaked = fs::read(&file_path).unwrap();
+        assert_ne!(leaked.as_slice(), payload);
+    }
 }

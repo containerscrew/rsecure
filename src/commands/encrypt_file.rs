@@ -5,65 +5,100 @@ use crate::cli::EncryptionArgs;
 use crate::file_ops::open_private_key;
 use crate::utils::{is_dir, is_file};
 use aes_gcm::aead::rand_core::RngCore;
-use aes_gcm::aead::stream;
-use aes_gcm::{Aes256Gcm, KeyInit, aead::OsRng};
+use aes_gcm::aead::{KeyInit, OsRng, Payload, stream};
+use aes_gcm::Aes256Gcm;
 use anyhow::Result;
 use console::style;
+use hkdf::Hkdf;
 use indicatif::{ProgressBar, ProgressStyle};
 use rayon::iter::{IntoParallelIterator, ParallelIterator};
+use sha2::Sha256;
 use walkdir::WalkDir;
+
+// File format v2:
+//   [magic "RSEC" 4B][version 1B][chunk_size_le u32 4B][hkdf_salt 32B]
+//   [AES-256-GCM STREAM ciphertext (each chunk authenticated with the header as AAD)]
+//
+// For each file we derive an AES-256 subkey via HKDF-SHA256(ikm=master_key,
+// salt=random 32 B, info=HKDF_INFO). Because the subkey is unique per file, the
+// STREAM nonce stays fixed (all zeros). The entire header is passed as AAD to
+// every chunk, so any tampering with the header bytes — version, chunk_size,
+// salt — invalidates the very first GCM tag and decryption fails immediately.
+const MAGIC: &[u8; 4] = b"RSEC";
+const FORMAT_VERSION_V2: u8 = 0x02;
+const HKDF_SALT_LEN: usize = 32;
+const HKDF_INFO: &[u8] = b"rsecure-v2-aes256gcm-stream";
+const STREAM_SALT_LEN: usize = 7;
+const CHUNK_SIZE: u32 = 131072;
+const HEADER_LEN: usize = 4 + 1 + 4 + HKDF_SALT_LEN; // 41
 
 fn is_excluded_dir(path: &str, exclude_list: &[String]) -> bool {
     exclude_list.iter().any(|ex| path.contains(ex))
 }
 
-// Encrypt file in chunks
+fn derive_subkey(master_key: &[u8], salt: &[u8]) -> Result<[u8; 32]> {
+    let hk = Hkdf::<Sha256>::new(Some(salt), master_key);
+    let mut subkey = [0u8; 32];
+    hk.expand(HKDF_INFO, &mut subkey)
+        .map_err(|_| anyhow::anyhow!("HKDF expand failed"))?;
+    Ok(subkey)
+}
+
+fn build_header(version: u8, chunk_size: u32, hkdf_salt: &[u8; HKDF_SALT_LEN]) -> [u8; HEADER_LEN] {
+    let mut header = [0u8; HEADER_LEN];
+    header[0..4].copy_from_slice(MAGIC);
+    header[4] = version;
+    header[5..9].copy_from_slice(&chunk_size.to_le_bytes());
+    header[9..41].copy_from_slice(hkdf_salt);
+    header
+}
+
 fn encrypt_file_stream(key_bytes: &[u8], source: &str, should_remove: bool) -> Result<()> {
-    // Init cipher
-    let key = aes_gcm::Key::<Aes256Gcm>::from_slice(key_bytes);
+    let mut hkdf_salt = [0u8; HKDF_SALT_LEN];
+    OsRng.fill_bytes(&mut hkdf_salt);
+
+    let subkey = derive_subkey(key_bytes, &hkdf_salt)?;
+    let key = aes_gcm::Key::<Aes256Gcm>::from_slice(&subkey);
     let cipher = Aes256Gcm::new(key);
 
-    // Gen 7-byte nonce
-    let mut nonce = [0u8; 7];
-    OsRng.fill_bytes(&mut nonce);
+    let stream_salt = [0u8; STREAM_SALT_LEN];
+    let mut encryptor = stream::EncryptorBE32::from_aead(cipher, &stream_salt.into());
 
-    // Init stream encryptor
-    let mut encryptor = stream::EncryptorBE32::from_aead(cipher, &nonce.into());
+    let header = build_header(FORMAT_VERSION_V2, CHUNK_SIZE, &hkdf_salt);
 
-    // Set dest filename
     let dest = format!("{}.enc", source);
-
-    // Open files
     let mut source_file = File::open(source)?;
     let mut dest_file = File::create(&dest)?;
 
-    // Write nonce
-    dest_file.write_all(&nonce)?;
+    dest_file.write_all(&header)?;
 
-    // Set 128KB buffer
-    let mut buffer = vec![0u8; 131072];
+    let mut buffer = vec![0u8; CHUNK_SIZE as usize];
 
-    // Read, encrypt, write loop
     loop {
         let read_count = source_file.read(&mut buffer)?;
 
         if read_count == buffer.len() {
-            // Encrypt full chunk
+            let payload = Payload {
+                msg: buffer[..].as_ref(),
+                aad: &header,
+            };
             let ciphertext = encryptor
-                .encrypt_next(buffer[..].as_ref())
+                .encrypt_next(payload)
                 .map_err(|_| anyhow::anyhow!("Encryption error on chunk"))?;
             dest_file.write_all(&ciphertext)?;
         } else {
-            // Encrypt final chunk
+            let payload = Payload {
+                msg: &buffer[..read_count],
+                aad: &header,
+            };
             let ciphertext = encryptor
-                .encrypt_last(&buffer[..read_count])
+                .encrypt_last(payload)
                 .map_err(|_| anyhow::anyhow!("Encryption error on final chunk"))?;
             dest_file.write_all(&ciphertext)?;
             break;
         }
     }
 
-    // Remove original file
     if should_remove {
         fs::remove_file(source)?;
     }
@@ -72,11 +107,9 @@ fn encrypt_file_stream(key_bytes: &[u8], source: &str, should_remove: bool) -> R
 }
 
 pub fn run(enc_args: EncryptionArgs) -> Result<()> {
-    // Read AES key
     let key_bytes = open_private_key(&enc_args.common.private_key_path)?;
 
     if is_dir(&enc_args.common.source) {
-        // Collect files into Vec
         let files_to_process: Vec<_> = WalkDir::new(&enc_args.common.source)
             .into_iter()
             .filter_map(|e| e.ok())
@@ -91,14 +124,12 @@ pub fn run(enc_args: EncryptionArgs) -> Result<()> {
             .filter(|path| !path.ends_with(".enc"))
             .collect();
 
-        // Setup progress bar
         let pb = ProgressBar::new(files_to_process.len() as u64);
         pb.set_style(ProgressStyle::default_bar()
             .template("{spinner:.green} [{elapsed_precise}] [{wide_bar:.cyan/blue}] {pos}/{len} files ({eta})")
             .unwrap()
             .progress_chars("#>-"));
 
-        // Process files in parallel
         files_to_process.into_par_iter().for_each(|file_path| {
             if let Err(e) = encrypt_file_stream(&key_bytes, &file_path, enc_args.common.remove_file)
             {
@@ -109,11 +140,9 @@ pub fn run(enc_args: EncryptionArgs) -> Result<()> {
                     e,
                 );
             }
-            // Update progress bar
             pb.inc(1);
         });
 
-        // Finish progress bar
         pb.finish_with_message("Encryption complete");
     } else if is_file(&enc_args.common.source) {
         if !enc_args.common.source.ends_with(".enc") {
@@ -133,56 +162,3 @@ pub fn run(enc_args: EncryptionArgs) -> Result<()> {
 
     Ok(())
 }
-
-// #[cfg(test)]
-// mod tests {
-//     use super::*;
-//     use aes_gcm::{Aes256Gcm, Key, KeyInit};
-//     use std::fs;
-//     use tempfile::tempdir;
-
-//     #[test]
-//     fn test_is_excluded_dir_matches() {
-//         let excludes = vec![".git".to_string(), "target".to_string()];
-//         assert!(is_excluded_dir("/home/user/project/.git/config", &excludes));
-//     }
-
-//     #[test]
-//     fn test_is_excluded_dir_not_matches() {
-//         let excludes = vec![".git".to_string()];
-//         assert!(!is_excluded_dir(
-//             "/home/user/project/src/main.rs",
-//             &excludes
-//         ));
-//     }
-
-//     #[test]
-//     fn encrypt_file_creates_enc_file() {
-//         let dir = tempdir().unwrap();
-//         let file_path = dir.path().join("test.txt");
-//         fs::write(&file_path, b"hola mundo").unwrap();
-
-//         let key = Key::<Aes256Gcm>::from_slice(&[0u8; 32]);
-//         let cipher = Aes256Gcm::new(key);
-
-//         encrypt_file(&cipher, file_path.to_str().unwrap(), false).unwrap();
-
-//         let enc_path = dir.path().join("test.txt.enc");
-//         assert!(enc_path.exists());
-//     }
-
-//     #[test]
-//     fn encrypt_file_removes_original_if_requested() {
-//         let dir = tempdir().unwrap();
-//         let file_path = dir.path().join("remove_me.txt");
-//         fs::write(&file_path, b"secret").unwrap();
-
-//         let key = Key::<Aes256Gcm>::from_slice(&[1u8; 32]);
-//         let cipher = Aes256Gcm::new(key);
-
-//         encrypt_file(&cipher, file_path.to_str().unwrap(), true).unwrap();
-
-//         assert!(!file_path.exists());
-//         assert!(dir.path().join("remove_me.txt.enc").exists());
-//     }
-// }

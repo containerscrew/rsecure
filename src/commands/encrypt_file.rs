@@ -158,9 +158,7 @@ pub fn run(enc_args: EncryptionArgs) -> Result<()> {
             .into_iter()
             .filter_map(|e| e.ok())
             .filter(|e| e.path().is_file())
-            .filter(|e| {
-                !is_excluded(e.path(), enc_args.exclude_dir.as_deref().unwrap_or(&[]))
-            })
+            .filter(|e| !is_excluded(e.path(), enc_args.exclude_dir.as_deref().unwrap_or(&[])))
             .map(|e| e.path().to_string_lossy().to_string())
             .filter(|path| !path.ends_with(".enc"))
             .collect();

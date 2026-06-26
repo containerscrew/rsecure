@@ -6,9 +6,7 @@ use std::sync::Mutex;
 use crate::cli::EncryptionArgs;
 use crate::crypto::{derive_master_key_argon2, derive_subkey_v2, derive_subkey_v3};
 use crate::file_ops::{open_private_key, prompt_passphrase};
-use crate::format::{
-    self, AEAD_TAG_LEN, ARGON2_SALT_LEN, CHUNK_SIZE, Header, STREAM_SALT_LEN,
-};
+use crate::format::{self, AEAD_TAG_LEN, ARGON2_SALT_LEN, CHUNK_SIZE, Header, STREAM_SALT_LEN};
 use crate::utils::{is_dir, is_file};
 use aes_gcm::Aes256Gcm;
 use aes_gcm::aead::{KeyInit, Payload, stream};
@@ -71,8 +69,7 @@ impl DecryptContext {
                         return Ok(MasterKey::Owned(*k));
                     }
                 }
-                let derived =
-                    derive_master_key_argon2(passphrase, argon2_salt, argon2_params)?;
+                let derived = derive_master_key_argon2(passphrase, argon2_salt, argon2_params)?;
                 {
                     let mut cache = self.argon2_cache.lock().unwrap();
                     cache.insert(cache_key, derived);
@@ -130,7 +127,13 @@ fn decrypt_to_path(ctx: &DecryptContext, source: &str, tmp_dest: &str) -> Result
             let decryptor = stream::DecryptorBE32::from_aead(cipher, &(*nonce).into());
             let mut dest_file = File::create(tmp_dest)?;
             let mut buffer = vec![0u8; CHUNK_SIZE as usize + AEAD_TAG_LEN];
-            return drive_decrypt_loop(&mut source_file, &mut dest_file, decryptor, &mut buffer, &[]);
+            return drive_decrypt_loop(
+                &mut source_file,
+                &mut dest_file,
+                decryptor,
+                &mut buffer,
+                &[],
+            );
         }
         Header::V2 { hkdf_salt, .. } => {
             let subkey = derive_subkey_v2(master_key.as_bytes(), hkdf_salt)?;
@@ -152,7 +155,13 @@ fn decrypt_to_path(ctx: &DecryptContext, source: &str, tmp_dest: &str) -> Result
     let mut buffer = vec![0u8; chunk_size as usize + AEAD_TAG_LEN];
     let mut dest_file = File::create(tmp_dest)?;
 
-    drive_decrypt_loop(&mut source_file, &mut dest_file, decryptor, &mut buffer, aad)
+    drive_decrypt_loop(
+        &mut source_file,
+        &mut dest_file,
+        decryptor,
+        &mut buffer,
+        aad,
+    )
 }
 
 fn drive_decrypt_loop(

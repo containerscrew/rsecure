@@ -213,7 +213,10 @@ fn passphrase_roundtrip() {
         .assert()
         .success();
     assert!(enc_path.exists());
-    assert!(file_path.exists(), "encrypt without -r preserves the source");
+    assert!(
+        file_path.exists(),
+        "encrypt without -r preserves the source"
+    );
 
     fs::remove_file(&file_path).unwrap();
 
@@ -327,5 +330,8 @@ fn decrypt_fails_when_v2_header_is_tampered() {
     );
     // The encrypted source must be preserved on failure (we only remove it on
     // a clean rename).
-    assert!(enc_path.exists(), "source .enc must be preserved on failure");
+    assert!(
+        enc_path.exists(),
+        "source .enc must be preserved on failure"
+    );
 }

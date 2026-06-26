@@ -32,14 +32,16 @@ pub fn derive_master_key_argon2(
     salt: &[u8],
     params: &format::Argon2Params,
 ) -> Result<[u8; 32]> {
-    let argon2_params = Params::new(
-        params.m_cost,
-        params.t_cost,
-        params.p_cost as u32,
-        Some(32),
-    )
-    .map_err(|e| anyhow!("Invalid Argon2 params (m={}, t={}, p={}): {}",
-        params.m_cost, params.t_cost, params.p_cost, e))?;
+    let argon2_params = Params::new(params.m_cost, params.t_cost, params.p_cost as u32, Some(32))
+        .map_err(|e| {
+        anyhow!(
+            "Invalid Argon2 params (m={}, t={}, p={}): {}",
+            params.m_cost,
+            params.t_cost,
+            params.p_cost,
+            e
+        )
+    })?;
     let argon2 = Argon2::new(Algorithm::Argon2id, Version::V0x13, argon2_params);
     let mut output = [0u8; 32];
     argon2

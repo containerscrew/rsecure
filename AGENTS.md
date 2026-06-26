@@ -11,12 +11,28 @@ beyond a quick reference belongs in a dedicated doc and should be linked from he
 or directories in 128 KiB chunks using STREAM (`EncryptorBE32`), parallelized with
 `rayon` and shown via `indicatif` progress bars. CLI parsing is `clap` derive.
 
+The master key comes from one of two sources:
+
+- a 32-byte key file (`-p` flag), or
+- a passphrase (`--passphrase` flag) run through [Argon2id](https://crates.io/crates/argon2).
+
+In both modes, the master key feeds [HKDF-SHA256](https://crates.io/crates/hkdf) to
+derive a unique per-file AES-256 subkey, so the `(key, nonce)` pair is globally
+unique across files. The on-disk file header is bound as AAD on every chunk —
+tampering with magic, version, flags, chunk_size, or salt invalidates the first
+GCM tag. The format is versioned: v1 (rsecure ≤ 0.5.0, legacy decrypt-only),
+v2 (interim HKDF-only), v3 (current, with flags byte for keyfile vs passphrase).
+See `SECURITY.md` and `src/format.rs` for the wire layout.
+
 Source layout:
 
 - `src/main.rs` — entry point, forbids `unsafe` crate-wide.
 - `src/cli/` — `clap` argument definitions.
 - `src/commands/` — one module per subcommand (`create_key`, `encrypt_file`, `decrypt_file`).
-- `src/file_ops.rs`, `src/utils.rs` — shared helpers.
+- `src/format.rs` — on-disk file format constants, `Header` enum, parser, and v3 header builders. Single source of truth for the wire layout.
+- `src/crypto.rs` — KDF helpers: `derive_subkey_v2/v3` (HKDF-SHA256) and `derive_master_key_argon2`.
+- `src/file_ops.rs` — keyfile I/O and the `prompt_passphrase` TTY/stdin helper.
+- `src/utils.rs` — small `is_file` / `is_dir` shared helpers.
 - `tests/cli.rs` — integration tests via `assert_cmd` + `predicates`.
 
 ## Setup & common commands
@@ -77,10 +93,15 @@ permissive licenses allowed.
 ## Security
 
 This is a cryptographic tool. Read `SECURITY.md` before changing any code in
-`src/commands/encrypt_file.rs`, `src/commands/decrypt_file.rs`, `src/commands/create_key.rs`,
-or `src/file_ops.rs`. The threat model and what `rsecure` does and does not guarantee
+`src/commands/encrypt_file.rs`, `src/commands/decrypt_file.rs`,
+`src/commands/create_key.rs`, `src/crypto.rs`, `src/format.rs`, or
+`src/file_ops.rs`. The threat model and what `rsecure` does and does not guarantee
 are documented there. Vulnerability reports go through GitHub Security Advisories —
 never open a public issue for a security bug.
+
+Format changes are also versioning changes: bump `VERSION_V3` (or define a new
+constant) and extend `Header` rather than mutating the existing v3 layout, so
+already-encrypted files remain decryptable.
 
 ## Things to avoid
 

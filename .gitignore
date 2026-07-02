@@ -38,3 +38,6 @@ dist/
 
 # Zig build artifacts
 .zig-cache/
+
+# Codebase memory MCP graph artifact
+.codebase-memory/

@@ -34,8 +34,11 @@ pub const HKDF_INFO_V2: &[u8] = b"rsecure-v2-aes256gcm-stream";
 pub const HKDF_INFO_V3: &[u8] = b"rsecure-v3-aes256gcm-stream";
 
 pub const ARGON2_SALT_LEN: usize = 16;
+#[allow(dead_code)]
 pub const ARGON2_DEFAULT_M_COST_KIB: u32 = 19_456; // ~19 MiB
+#[allow(dead_code)]
 pub const ARGON2_DEFAULT_T_COST: u32 = 2;
+#[allow(dead_code)]
 pub const ARGON2_DEFAULT_P_COST: u8 = 1;
 
 pub const LEGACY_NONCE_LEN: usize = 7;
@@ -56,6 +59,7 @@ pub struct Argon2Params {
 }
 
 impl Argon2Params {
+    #[allow(dead_code)]
     pub fn defaults() -> Self {
         Self {
             m_cost: ARGON2_DEFAULT_M_COST_KIB,

@@ -17,7 +17,7 @@ fn main() -> anyhow::Result<()> {
     match args.command {
         Commands::CreateKey(create_key_args) => commands::create_key::run(create_key_args)?,
         Commands::Encrypt(enc_args) => commands::encrypt_file::run(enc_args)?,
-        Commands::Decrypt(enc_args) => commands::decrypt_file::run(enc_args)?,
+        Commands::Decrypt(dec_args) => commands::decrypt_file::run(dec_args)?,
     }
     Ok(())
 }

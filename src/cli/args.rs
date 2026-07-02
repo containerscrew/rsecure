@@ -18,7 +18,7 @@ pub enum Commands {
     #[clap(about = "Encrypt a file in plain text  using your AES key.")]
     Encrypt(EncryptionArgs),
     #[clap(about = "Decrypt an encrypted file using your AES private key.")]
-    Decrypt(EncryptionArgs),
+    Decrypt(DecryptionArgs),
     #[clap(about = "Create a new AES key pair.")]
     CreateKey(CreateKeyArgs),
 }
@@ -44,6 +44,30 @@ pub struct EncryptionArgs {
         help = "Use a passphrase (Argon2id) instead of a key file. Prompts on stdin (no echo)."
     )]
     pub passphrase: bool,
+
+    #[arg(
+        long = "argon2-memory",
+        help = "Argon2id memory cost in KiB (default: 19456 ~ 19 MiB)",
+        value_parser = clap::value_parser!(u32).range(8..),
+        default_value = "19456"
+    )]
+    pub argon2_m_cost: u32,
+
+    #[arg(
+        long = "argon2-time",
+        help = "Argon2id time cost / iterations (default: 2)",
+        value_parser = clap::value_parser!(u32).range(1..),
+        default_value = "2"
+    )]
+    pub argon2_t_cost: u32,
+
+    #[arg(
+        long = "argon2-parallelism",
+        help = "Argon2id parallelism / lanes (default: 1)",
+        value_parser = clap::value_parser!(u8).range(1..),
+        default_value = "1"
+    )]
+    pub argon2_p_cost: u8,
 }
 
 #[derive(Debug, Args, Clone, PartialEq, Eq)]

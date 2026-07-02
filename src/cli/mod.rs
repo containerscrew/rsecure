@@ -1,3 +1,3 @@
 mod args;
 
-pub use args::{Commands, CreateKeyArgs, EncryptionArgs, RsecureCliArgs};
+pub use args::{Commands, CreateKeyArgs, DecryptionArgs, EncryptionArgs, RsecureCliArgs};

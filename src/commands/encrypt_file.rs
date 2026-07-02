@@ -17,6 +17,7 @@ use console::style;
 use indicatif::{ProgressBar, ProgressStyle};
 use rayon::iter::{IntoParallelIterator, ParallelIterator};
 use walkdir::WalkDir;
+use zeroize::Zeroizing;
 
 // Returns true if any path component matches an entry of `exclude_list`.
 // Trailing path separators on the patterns are stripped, so `-e .git` and
@@ -39,18 +40,25 @@ fn is_excluded(path: &Path, exclude_list: &[String]) -> bool {
 /// What the encrypter needs in order to write a single file's header and
 /// derive its subkey. The master key was either read from a keyfile or
 /// derived once via Argon2id from the passphrase entered at invocation time.
-struct EncryptContext<'a> {
-    master_key: &'a [u8],
+/// The master key is held in a `Zeroizing` wrapper so its memory is scrubbed
+/// when the context is dropped.
+struct EncryptContext {
+    master_key: Zeroizing<Vec<u8>>,
     /// `Some` for passphrase mode: every file embeds these Argon2 params and
     /// salt in its header so decrypt can re-derive without prompting again.
     passphrase_meta: Option<(Argon2Params, [u8; ARGON2_SALT_LEN])>,
 }
 
-fn encrypt_file_stream(ctx: &EncryptContext, source: &str, should_remove: bool) -> Result<()> {
+fn encrypt_file_stream(
+    ctx: &EncryptContext,
+    source: &str,
+    should_remove: bool,
+    show_progress: bool,
+) -> Result<()> {
     let final_dest = format!("{}.enc", source);
     let tmp_dest = format!("{}.enc.tmp", source);
 
-    match encrypt_to_path(ctx, source, &tmp_dest) {
+    match encrypt_to_path(ctx, source, &tmp_dest, show_progress) {
         Ok(()) => {
             fs::rename(&tmp_dest, &final_dest)?;
             if should_remove {
@@ -65,11 +73,16 @@ fn encrypt_file_stream(ctx: &EncryptContext, source: &str, should_remove: bool) 
     }
 }
 
-fn encrypt_to_path(ctx: &EncryptContext, source: &str, tmp_dest: &str) -> Result<()> {
+fn encrypt_to_path(
+    ctx: &EncryptContext,
+    source: &str,
+    tmp_dest: &str,
+    show_progress: bool,
+) -> Result<()> {
     let mut hkdf_salt = [0u8; HKDF_SALT_LEN];
     OsRng.fill_bytes(&mut hkdf_salt);
 
-    let subkey = derive_subkey_v3(ctx.master_key, &hkdf_salt)?;
+    let subkey = derive_subkey_v3(&ctx.master_key, &hkdf_salt)?;
     let key = aes_gcm::Key::<Aes256Gcm>::from_slice(&subkey);
     let cipher = Aes256Gcm::new(key);
 
@@ -84,13 +97,28 @@ fn encrypt_to_path(ctx: &EncryptContext, source: &str, tmp_dest: &str) -> Result
     };
 
     let mut source_file = File::open(source)?;
+    let file_size = source_file.metadata()?.len();
     let mut dest_file = File::create(tmp_dest)?;
     dest_file.write_all(&header)?;
+
+    let pb = if show_progress {
+        let pb = ProgressBar::new(file_size);
+        pb.set_style(ProgressStyle::default_bar()
+            .template("{spinner:.green} [{elapsed_precise}] [{wide_bar:.cyan/blue}] {bytes}/{total_bytes} ({bytes_per_sec}, {eta})")
+            .unwrap()
+            .progress_chars("#>-"));
+        Some(pb)
+    } else {
+        None
+    };
 
     let mut buffer = vec![0u8; CHUNK_SIZE as usize];
 
     loop {
         let read_count = source_file.read(&mut buffer)?;
+        if let Some(ref pb) = pb {
+            pb.inc(read_count as u64);
+        }
 
         if read_count == buffer.len() {
             let payload = Payload {
@@ -112,6 +140,10 @@ fn encrypt_to_path(ctx: &EncryptContext, source: &str, tmp_dest: &str) -> Result
             dest_file.write_all(&ciphertext)?;
             break;
         }
+    }
+
+    if let Some(pb) = pb {
+        pb.finish_with_message("Encrypted");
     }
 
     Ok(())
@@ -136,20 +168,28 @@ pub fn run(enc_args: EncryptionArgs) -> Result<()> {
     }
 
     // Resolve master key once.
-    let (master_key, passphrase_meta) = if use_passphrase {
+    let master_key: Zeroizing<Vec<u8>>;
+    let passphrase_meta;
+
+    if use_passphrase {
         let passphrase = prompt_passphrase(true)?;
-        let params = Argon2Params::defaults();
+        let params = Argon2Params {
+            m_cost: enc_args.argon2_m_cost,
+            t_cost: enc_args.argon2_t_cost,
+            p_cost: enc_args.argon2_p_cost,
+        };
         let mut argon2_salt = [0u8; ARGON2_SALT_LEN];
         OsRng.fill_bytes(&mut argon2_salt);
         let mk = derive_master_key_argon2(&passphrase, &argon2_salt, &params)?;
-        (mk.to_vec(), Some((params, argon2_salt)))
+        master_key = Zeroizing::new(mk.to_vec());
+        passphrase_meta = Some((params, argon2_salt));
     } else {
-        let bytes = open_private_key(key_path.as_deref().expect("checked above"))?;
-        (bytes, None)
-    };
+        master_key = open_private_key(key_path.as_deref().expect("checked above"))?;
+        passphrase_meta = None;
+    }
 
     let ctx = EncryptContext {
-        master_key: &master_key,
+        master_key,
         passphrase_meta,
     };
 
@@ -170,7 +210,9 @@ pub fn run(enc_args: EncryptionArgs) -> Result<()> {
             .progress_chars("#>-"));
 
         files_to_process.into_par_iter().for_each(|file_path| {
-            if let Err(e) = encrypt_file_stream(&ctx, &file_path, enc_args.common.remove_file) {
+            if let Err(e) =
+                encrypt_file_stream(&ctx, &file_path, enc_args.common.remove_file, false)
+            {
                 eprintln!(
                     "{} Failed to encrypt {}: {}",
                     style("✗").red().bold(),
@@ -190,7 +232,12 @@ pub fn run(enc_args: EncryptionArgs) -> Result<()> {
                 style(&enc_args.common.source).bold(),
             );
         } else {
-            encrypt_file_stream(&ctx, &enc_args.common.source, enc_args.common.remove_file)?;
+            encrypt_file_stream(
+                &ctx,
+                &enc_args.common.source,
+                enc_args.common.remove_file,
+                true,
+            )?;
         }
     } else {
         eprintln!(

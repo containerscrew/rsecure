@@ -4,6 +4,7 @@ use anyhow::{Result, anyhow};
 use argon2::{Algorithm, Argon2, Params, Version};
 use hkdf::Hkdf;
 use sha2::Sha256;
+use zeroize::Zeroizing;
 
 use crate::format;
 
@@ -31,7 +32,7 @@ pub fn derive_master_key_argon2(
     passphrase: &[u8],
     salt: &[u8],
     params: &format::Argon2Params,
-) -> Result<[u8; 32]> {
+) -> Result<Zeroizing<[u8; 32]>> {
     let argon2_params = Params::new(params.m_cost, params.t_cost, params.p_cost as u32, Some(32))
         .map_err(|e| {
         anyhow!(
@@ -47,5 +48,5 @@ pub fn derive_master_key_argon2(
     argon2
         .hash_password_into(passphrase, salt, &mut output)
         .map_err(|e| anyhow!("Argon2 derivation failed: {}", e))?;
-    Ok(output)
+    Ok(Zeroizing::new(output))
 }

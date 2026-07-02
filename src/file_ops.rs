@@ -4,6 +4,7 @@ use std::{
 };
 
 use anyhow::{Result, anyhow};
+use zeroize::Zeroizing;
 
 pub fn write_to_file(file_path: &str, contents: &[&[u8]]) -> Result<()> {
     let mut file = File::create(file_path)?;
@@ -13,11 +14,19 @@ pub fn write_to_file(file_path: &str, contents: &[&[u8]]) -> Result<()> {
     Ok(())
 }
 
-pub fn open_private_key(file_path: &str) -> Result<Vec<u8>> {
+pub fn open_private_key(file_path: &str) -> Result<Zeroizing<Vec<u8>>> {
     let mut file = File::open(file_path)?;
-    let mut key_bytes = vec![0u8; 32]; // AES-256 key size
+    let file_len = file.metadata()?.len();
+    let mut key_bytes = vec![0u8; 32];
     file.read_exact(&mut key_bytes)?;
-    Ok(key_bytes)
+    if file_len > 32 {
+        return Err(anyhow!(
+            "Key file '{}' is {} bytes — expected exactly 32 bytes (256 bits)",
+            file_path,
+            file_len
+        ));
+    }
+    Ok(Zeroizing::new(key_bytes))
 }
 
 /// Prompt the user for a passphrase without echoing it. If `confirm`, prompts
@@ -26,7 +35,7 @@ pub fn open_private_key(file_path: &str) -> Result<Vec<u8>> {
 /// when stdin is piped (tests, shell pipelines), it reads a line from stdin
 /// directly — no echo manipulation needed since there's no terminal to echo
 /// to anyway.
-pub fn prompt_passphrase(confirm: bool) -> Result<Vec<u8>> {
+pub fn prompt_passphrase(confirm: bool) -> Result<Zeroizing<Vec<u8>>> {
     let interactive = std::io::stdin().is_terminal();
 
     let read = |label: &str| -> Result<String> {
@@ -57,5 +66,5 @@ pub fn prompt_passphrase(confirm: bool) -> Result<Vec<u8>> {
     if p1.is_empty() {
         return Err(anyhow!("Passphrase cannot be empty"));
     }
-    Ok(p1.into_bytes())
+    Ok(Zeroizing::new(p1.into_bytes()))
 }

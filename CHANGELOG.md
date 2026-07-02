@@ -8,6 +8,19 @@
 - update changelog for v0.2.0 - (53584da) - containerscrew
 
 - - -
+## 0.6.1 - 2026-07-02
+#### Features
+- add zeroize memory hardening, custom Argon2 params, and per-file progress bars - (019ba80) - containerscrew
+#### Miscellaneous Chores
+- (**deps**) bump console from 0.16.3 to 0.16.4 - (2562749) - dependabot[bot]
+- (**deps**) bump indicatif from 0.18.4 to 0.18.5 - (deed740) - dependabot[bot]
+- (**deps**) bump sha2 from 0.10.9 to 0.11.0 - (e823843) - dependabot[bot]
+- (**deps**) bump anyhow from 1.0.102 to 1.0.103 - (7eaa269) - dependabot[bot]
+- (**deps**) bump hkdf from 0.12.4 to 0.13.0 - (9daff54) - dependabot[bot]
+- (**version**) 0.6.0 - (c3de5ed) - containerscrew
+
+- - -
+
 ## 0.6.0 - 2026-06-26
 #### Features
 - (**crypto**) v3 file format with passphrase (Argon2id) mode - (2457505) - containerscrew

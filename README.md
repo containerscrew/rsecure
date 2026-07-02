@@ -43,7 +43,10 @@ echo "hello rsecure" > /tmp/secret.txt
 # 4. Encrypt it (-r removes the plaintext after encryption)
 rsecure encrypt -p /tmp/rsecure.key -s /tmp/secret.txt -r
 
-# 5. Decrypt it back
+# 5. Peek at the ciphertext — nothing recognizable, just the RSEC header + AES-GCM bytes
+cat /tmp/secret.txt.enc          # binary garble; use `xxd /tmp/secret.txt.enc | head` for a clean hex view
+
+# 6. Decrypt it back
 rsecure decrypt -p /tmp/rsecure.key -s /tmp/secret.txt.enc
 ```
 

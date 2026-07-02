@@ -29,6 +29,19 @@ Net result: a single `cog bump --version X.Y.Z` produces a fully released and pu
 - The version in `Cargo.toml` MUST match the latest git tag at all times. The automation guarantees this — if you ever see them diverge, something failed mid-way; stop and investigate.
 - Required tools: `cog` (cocogitto 7+) and `cargo-set-version` (from `cargo-edit`). If either is missing, stop and ask the user to install — do not try to substitute manual edits.
 
+## Irreversibility warning
+
+Pushing a tag triggers `goreleaser` (GitHub Release + binary artifacts), the
+`publish-crate` job (crates.io), and downstream packaging (AUR). Once any of these
+fire, the version is effectively immutable — crates.io does not allow republishing
+a version, and AUR mirrors the tag. **Get the version right *before* running
+`cog bump`.** If you realize the wrong bump is about to happen, stop and ask the
+user; do not try to "fix it later" by rewriting history.
+
+In particular, if a `feat:` commit is present since the last tag, the next bump
+MUST be **minor**, not patch — never quietly downgrade the bump to avoid a version
+jump.
+
 ## Steps
 
 ### 1. Pre-flight
@@ -44,6 +57,9 @@ which cog && which cargo-set-version    # tools must be present
 
 - Working tree must be clean.
 - Latest tag MUST equal the `Cargo.toml` version. If not, STOP and surface to the user.
+- Also `ls` the repo root and glance at `git ls-files` for stray scratch/review/plan
+  files that agents may have left behind. If found, remove them in a `chore` commit
+  *before* the bump — a bumped tag will ship whatever is in the tree.
 
 ### 2. Propose the next version
 

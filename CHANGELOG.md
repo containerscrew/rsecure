@@ -8,6 +8,13 @@
 - update changelog for v0.2.0 - (53584da) - containerscrew
 
 - - -
+## 0.7.0 - 2026-07-02
+#### Miscellaneous Chores
+- (**deps**) bump indicatif from 0.18.5 to 0.18.6 - (752b81b) - dependabot[bot]
+- remove stray review.md from tree - (c52cda5) - containerscrew
+
+- - -
+
 ## 0.6.1 - 2026-07-02
 #### Features
 - add zeroize memory hardening, custom Argon2 params, and per-file progress bars - (019ba80) - containerscrew

@@ -15,6 +15,10 @@ The master key comes from one of two sources:
 
 - a 32-byte key file (`-p` flag), or
 - a passphrase (`--passphrase` flag) run through [Argon2id](https://crates.io/crates/argon2).
+  Argon2 cost parameters can be tuned via `--argon2-memory`, `--argon2-time`, and
+  `--argon2-parallelism`; the chosen values are stored in the file header so
+  decryption is transparent. Passphrases, master keys, and derived subkeys are
+  wrapped in [`zeroize`](https://crates.io/crates/zeroize) guards.
 
 In both modes, the master key feeds [HKDF-SHA256](https://crates.io/crates/hkdf) to
 derive a unique per-file AES-256 subkey, so the `(key, nonce)` pair is globally

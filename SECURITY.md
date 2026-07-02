@@ -33,10 +33,14 @@ entropy.
 `flags & 0x01 == 1` (**passphrase**): the master key is derived via
 Argon2id(passphrase, argon2_salt, params) where the salt and parameters live in
 the file header. Default parameters: `m_cost = 19456 KiB (~19 MiB)`,
-`t_cost = 2`, `p_cost = 1`, output length 32 bytes. The salt is generated once
-per invocation, so an entire `encrypt` batch shares one Argon2 derivation; the
-decrypter caches by salt to avoid re-running the KDF on subsequent files of the
-same batch.
+`t_cost = 2`, `p_cost = 1`, output length 32 bytes. These defaults can be
+overridden per-invocation via `--argon2-memory`, `--argon2-time`, and
+`--argon2-parallelism`; the chosen values are recorded in each file's header so
+decryption picks them up automatically. **Raising the parameters (more memory,
+more iterations) strengthens the KDF; lowering them below the defaults weakens
+it and is discouraged.** The salt is generated once per invocation, so an entire
+`encrypt` batch shares one Argon2 derivation; the decrypter caches by salt to
+avoid re-running the KDF on subsequent files of the same batch.
 
 **Security in passphrase mode is bounded by the entropy of your passphrase.**
 Argon2id raises the cost-per-attempt enough to make weak passphrases
@@ -80,6 +84,12 @@ widely-used, audited, pure-Rust implementations.
   and a final-chunk marker.
 - **No catastrophic nonce reuse across files** — the per-file HKDF subkey makes the
   `(key, nonce)` pair globally unique even with a fixed STREAM nonce.
+- **Best-effort memory hygiene** for secrets. Passphrases, master keys, and
+  derived subkeys are wrapped in [`zeroize`](https://crates.io/crates/zeroize)
+  guards and cleared on drop. This is best-effort — Rust does not guarantee
+  freedom from compiler-introduced copies or spilled stack slots, and swap /
+  hibernation / core dumps can still leak secrets outside the process — but it
+  narrows the residual-memory attack surface.
 - **Header authenticity (v2 only).** Modifying any byte of the on-disk header
   (magic, version, chunk_size, salt) causes decryption to fail with an auth error
   on the first chunk, before any plaintext is written. There is no downgrade,

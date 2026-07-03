@@ -167,7 +167,60 @@ To report a vulnerability, please use [GitHub Security Advisories](https://githu
 
 If future features ever require asymmetric crypto (for example, recipient-based encryption), the plan is to reach for NIST PQC standards (ML-KEM / ML-DSA) rather than pre-quantum primitives.
 
-## Local dev
+## Development
+
+### Prerequisites
+
+The Rust toolchain is pinned to a specific version in [`rust-toolchain.toml`](./rust-toolchain.toml),
+so [`rustup`](https://rustup.rs/) will pick it up automatically when you `cd` into
+the repo — no manual `rustup override` needed.
+
+```bash
+git clone https://github.com/containerscrew/rsecure.git
+cd rsecure
+cargo build                       # the pinned toolchain is installed on first build
+```
+
+Extra tooling used by the `Makefile` targets and the commit/release workflow:
+
+```bash
+cargo install cargo-nextest       # test runner used by `make test`
+rustup component add clippy rustfmt
+```
+
+For contributing (commit hooks + release flow), also install:
+
+- [`pre-commit`](https://pre-commit.com/) — runs the checks in [`.pre-commit-config.yaml`](./.pre-commit-config.yaml). After installing: `pre-commit install`.
+- [`cocogitto`](https://docs.cocogitto.io/) (`cog`) — commits follow [Conventional Commits](https://www.conventionalcommits.org/) and are made with `cog commit <type> "<msg>" [scope]`. Enable the repo's git hooks with `cog install-hooks --all`.
+- [`cargo-set-version`](https://crates.io/crates/cargo-edit) — only needed to cut a release (`cog bump --version X.Y.Z`).
+
+### Common commands
+
+The `Makefile` targets mirror what CI runs:
+
+```bash
+make test       # cargo nextest run
+make lint       # cargo clippy -- -D warnings
+make fmt        # cargo fmt --all
+make ci         # fmt + lint + test (run this before pushing)
+make build      # debug build
+make release    # release build
+```
+
+### Optional AI-agent skills
+
+A small set of project-scoped [Claude Code skills](https://skills.sh/) is pinned in
+[`skills-lock.json`](./skills-lock.json). If you use an AI coding agent in this repo,
+restore them with:
+
+```bash
+npx skills experimental_install
+```
+
+The downloaded skill files are git-ignored; only the lock file is committed. See
+[`docs/skills.md`](./docs/skills.md) for details.
+
+### Manual encrypt/decrypt testing
 
 Testing encryption and decryption:
 

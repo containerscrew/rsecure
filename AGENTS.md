@@ -79,7 +79,10 @@ Run a single test: `cargo nextest run -E 'test(/<name>/)'`.
   the project into `codebase-memory` so future graph/trace queries stay accurate.
   Run `mcp__codebase-memory-mcp__index_repository` on the current working directory
   after the change lands (or `detect_changes` first if you want to confirm drift).
-  Do this as a persistent habit — do not wait to be asked.
+  Do this as a persistent habit — do not wait to be asked. When the call flow
+  itself changes (new functions/subcommands, or a refactor of the encrypt/decrypt
+  path), also regenerate the diagrams in [`docs/architecture.md`](docs/architecture.md)
+  from the graph (`trace_path`/`search_graph`) rather than hand-editing the Mermaid.
 
 ## Releases
 

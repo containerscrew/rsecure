@@ -4,6 +4,9 @@
 
 `rsecure` uses `stream` encryption and `rayon` parallelism. The speed of the encryption also depends of your hardware specs (disk speed, CPU speed and number of cores).
 
+> [!IMPORTANT]
+> **Post-quantum is a design goal, not a certification.** `rsecure` is deliberately built on symmetric primitives only — no RSA, no ECDH, no ECDSA, no X25519 — so there is no asymmetric surface for Shor's algorithm to break. AES-256 and SHA-256 are only reduced to ~128-bit security by Grover's algorithm, comfortably above the standard threshold, and AES-256 is part of NSA CNSA 2.0's post-quantum symmetric baseline. This shapes the direction of the project; it is **not** a formal PQ certification. See [Post-Quantum posture](#post-quantum-posture) and [`SECURITY.md`](./SECURITY.md#post-quantum-considerations) for the honest caveats.
+
 <p align="center" >
     <a href="https://github.com/containerscrew/rsecure/actions/workflows/ci-cd.yml"><img alt="CI" src="https://img.shields.io/github/actions/workflow/status/containerscrew/rsecure/ci-cd.yml?branch=main&label=CI"></a>
     <a href="./CHANGELOG.md"><img alt="Changelog" src="https://img.shields.io/badge/changelog-md-blue"></a>
@@ -143,6 +146,26 @@ sudo rsecure encrypt -p /root/rsecure.key -s /home/dcr/Documents/PrivateDocument
 Read [`SECURITY.md`](./SECURITY.md) for the full threat model — what `rsecure` does and does not protect against, the exact cryptographic parameters, and key custody guidance.
 
 To report a vulnerability, please use [GitHub Security Advisories](https://github.com/containerscrew/rsecure/security/advisories/new) — do **not** open a public issue.
+
+## Post-Quantum posture
+
+`rsecure` is being developed with the intent of staying safe in a world where large-scale quantum computers exist. This is a **stated direction**, not a formal guarantee — the project is small, evolving, and has not undergone independent cryptanalytic review. Read this section for what that intent means in practice.
+
+**Where the PQ story is genuinely strong:**
+
+- **No asymmetric crypto anywhere.** rsecure does not use RSA, ECDH, ECDSA, or X25519. Shor's algorithm has nothing to break in the current design. This is the single biggest PQ risk in tools like `age`, `gpg`, or PGP — and rsecure sidesteps it by construction.
+- **AES-256-GCM.** Grover's algorithm reduces AES-256's effective security from 256 to ~128 bits, comfortably above the standard 128-bit threshold. Approved as part of NSA CNSA 2.0's post-quantum symmetric baseline.
+- **HKDF-SHA256** for per-file subkey derivation. Grover reduces preimage resistance from 256 to ~128 bits, still safe. rsecure does not use SHA-256 for long-lived signatures, so CNSA 2.0's preference for SHA-384/512 in signing contexts does not apply here.
+- **Argon2id** for passphrase-mode master key derivation. Symmetric, memory-hard, unaffected by Shor; Grover only offers a √-speedup against the KDF.
+
+**Where the PQ story has limits — be honest about these:**
+
+- rsecure does not provide authenticated key exchange or key wrapping. If you distribute a keyfile to another party, the transport channel must be quantum-safe on its own — that is out of scope for this tool.
+- Legacy on-disk formats (v1, v2) inherit the parameters of their era. The PQ posture applies to files produced by the current version (v3).
+- Side-channel resistance is best-effort, inherited from `aes-gcm`. Not a PQ property, but worth stating alongside other honest caveats.
+- No formal PQ certification exists for this implementation. NIST PQC categories describe primitives; they do not vouch for this specific codebase.
+
+If future features ever require asymmetric crypto (for example, recipient-based encryption), the plan is to reach for NIST PQC standards (ML-KEM / ML-DSA) rather than pre-quantum primitives.
 
 ## Local dev
 

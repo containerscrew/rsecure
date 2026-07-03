@@ -72,6 +72,56 @@ The cryptographic primitives are provided by the [`aes-gcm`][aes-gcm-crate],
 [`hkdf`][hkdf-crate], and [`argon2`][argon2-crate] crates from [RustCrypto],
 widely-used, audited, pure-Rust implementations.
 
+## Post-Quantum Considerations
+
+`rsecure` is being developed with the intent of remaining safe against a
+large-scale quantum adversary. This is a **stated design goal**, not a formal
+certification — the project is small, evolving, and has not undergone
+independent cryptanalytic review. Read this section for what the intent means
+in concrete terms and where the honest limits sit.
+
+### Primitives and their post-quantum status
+
+| Primitive     | Classical security | Post-quantum security          | Notes |
+|---------------|--------------------|--------------------------------|-------|
+| AES-256-GCM   | 256-bit key        | ~128-bit (Grover)              | NIST PQC Category 5; part of NSA CNSA 2.0 symmetric baseline. |
+| HKDF-SHA256   | 256-bit preimage   | ~128-bit preimage (Grover)     | Used for per-file subkey derivation only; not for long-lived signatures. |
+| Argon2id      | Memory-hard        | Memory-hard (√ speedup only)   | Symmetric password KDF; unaffected by Shor. See RFC 9106. |
+
+No asymmetric primitives are used anywhere in `rsecure`. There is no RSA, no
+elliptic-curve Diffie–Hellman, no ECDSA, and no X25519 — so Shor's algorithm
+has nothing to break in the current design. This is the single biggest
+post-quantum risk in tools that rely on public-key primitives for key
+agreement or signing, and rsecure sidesteps it by construction.
+
+### What this does NOT mean
+
+- **No formal PQ certification exists for this implementation.** NIST PQC
+  categories apply to the primitives, not to this specific codebase or
+  parameter choices.
+- **No post-quantum KEM or signature is included.** rsecure does not ship
+  ML-KEM (Kyber) or ML-DSA (Dilithium) today because there is no
+  key-exchange or signing surface in scope. If a future feature ever
+  requires asymmetric crypto (e.g., recipient-based encryption), the
+  intention is to reach for NIST PQC standards rather than pre-quantum
+  primitives.
+- **Legacy formats (v1, v2)** inherit the parameters of their era. The
+  post-quantum posture applies to files produced by the current v3 format;
+  re-encrypting long-lived archives is recommended.
+- **Distributing keys and passphrases** still relies on out-of-band channels;
+  the post-quantum properties of those channels are outside `rsecure`'s
+  scope and remain the user's responsibility.
+- **Side-channel resistance** is best-effort (inherited from `aes-gcm`) and
+  is not itself a post-quantum property, but is listed here alongside the
+  other honest caveats.
+
+### References
+
+- NSA CNSA 2.0 (2022) — AES-256 and SHA-384+ as post-quantum symmetric baseline.
+- NIST FIPS 203 (ML-KEM), FIPS 204 (ML-DSA), FIPS 205 (SLH-DSA) — standardized
+  post-quantum asymmetric primitives, referenced here for future work only.
+- NIST SP 800-208 — stateful hash-based signatures (not used by rsecure).
+
 ## Threat Model
 
 ### What rsecure guarantees
@@ -94,6 +144,11 @@ widely-used, audited, pure-Rust implementations.
   (magic, version, chunk_size, salt) causes decryption to fail with an auth error
   on the first chunk, before any plaintext is written. There is no downgrade,
   rebinding, or wrong-key-via-salt-swap path that produces valid plaintext.
+- **Post-quantum design intent (symmetric-only).** No RSA, ECDH, ECDSA, or
+  X25519 is used, so Shor's algorithm has nothing to break in the current
+  design. AES-256 and SHA-256 are only reduced to ~128-bit security by
+  Grover. See [Post-Quantum Considerations](#post-quantum-considerations)
+  for the honest limits — this is a design goal, not a certification.
 
 ### What rsecure does NOT guarantee
 

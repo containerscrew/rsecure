@@ -64,10 +64,11 @@ release:
 changelog:
   sort: asc
   use: github
-  filters:
-    exclude:
-      - "^docs:"
-      - "^test:"
+  # Filters disabled for now so every commit shows up in the release changelog.
+  # filters:
+  #   exclude:
+  #     - "^docs:"
+  #     - "^test:"
 
 brews:
   - name: rsecure

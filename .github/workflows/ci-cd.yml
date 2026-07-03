@@ -5,7 +5,7 @@ permissions:
 
 env:
   CARGO_TERM_COLOR: always
-  RUST_VERSION: 1.94.0
+  RUST_VERSION: 1.96.0
 
 on:
   pull_request:
@@ -146,6 +146,11 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v6
+        with:
+          # GoReleaser needs full git history + tags to build the changelog
+          # (the range between the previous tag and this one). Without this it
+          # only sees the tagged bump commit.
+          fetch-depth: 0
 
       - name: Setup Zig
         # https://codeberg.org/mlugg/setup-zig/

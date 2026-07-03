@@ -41,3 +41,11 @@ dist/
 
 # Codebase memory MCP graph artifact
 .codebase-memory/
+
+# Optional skills installed via `npx skills` (see docs/skills.md).
+# Only skills-lock.json is committed; restore the files with
+# `npx skills experimental_install`. The downloaded/symlinked content is generated.
+.agents/
+.claude/skills/cargo-fuzz
+.claude/skills/rust-best-practices
+.claude/skills/security-ownership-map

@@ -1,0 +1,23 @@
+{
+  "version": 1,
+  "skills": {
+    "cargo-fuzz": {
+      "source": "trailofbits/skills",
+      "sourceType": "github",
+      "skillPath": "plugins/testing-handbook-skills/skills/cargo-fuzz/SKILL.md",
+      "computedHash": "d3f0be4bd295400e7f8ba8a0fb695cde53bc7958357edf4e5876c798bbc598ba"
+    },
+    "rust-best-practices": {
+      "source": "apollographql/skills",
+      "sourceType": "github",
+      "skillPath": "skills/rust-best-practices/SKILL.md",
+      "computedHash": "fd336f2f772eb46ddf8658de5f9dd8faa1f35615b316665307fc82eeb4b2e658"
+    },
+    "security-ownership-map": {
+      "source": "openai/skills",
+      "sourceType": "github",
+      "skillPath": "skills/.curated/security-ownership-map/SKILL.md",
+      "computedHash": "0eefbaabdbe0ccfc39555195b9a7f7c8369abe1b4dc969aabb2e5aec8c3705ab"
+    }
+  }
+}

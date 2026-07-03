@@ -82,6 +82,7 @@ download_release() {
 
   FILENAME="${BINARY_NAME}_${CLEAN_VERSION}_${OS}_${CLI_ARCH}.${PKG_FORMAT}"
   DOWNLOAD_URL="https://github.com/$REPO/releases/download/${TAG_VERSION}/${FILENAME}"
+  CHECKSUMS_URL="https://github.com/$REPO/releases/download/${TAG_VERSION}/checksums.txt"
 
   printf "\033[0;32m[info] - OS: %s | Arch: %s | Format: %s \033[0m\n" "$OS" "$CLI_ARCH" "$PKG_FORMAT"
   printf "\033[0;32m[info] - Downloading %s... \033[0m\n" "$FILENAME"
@@ -89,8 +90,52 @@ download_release() {
   # Download to /tmp
   curl -L --fail "$DOWNLOAD_URL" -o "/tmp/$FILENAME"
 
-  # Export filename for the install function
+  printf "\033[0;32m[info] - Downloading checksums.txt... \033[0m\n"
+  curl -L --fail "$CHECKSUMS_URL" -o "/tmp/checksums.txt"
+
+  # Export filenames for the install function
   DOWNLOADED_FILE="/tmp/$FILENAME"
+  CHECKSUMS_FILE="/tmp/checksums.txt"
+}
+
+# Verify SHA256 checksum of the downloaded artifact against checksums.txt.
+# Tries sha256sum, shasum -a 256, then openssl dgst -sha256.
+verify_checksum() {
+  printf "\033[0;32m[info] - Verifying checksum... \033[0m\n"
+
+  if [ ! -f "$CHECKSUMS_FILE" ]; then
+    echo "⚠  Warning: checksums.txt not found — skipping verification"
+    return 0
+  fi
+
+  EXPECTED=$(grep -F "$FILENAME" "$CHECKSUMS_FILE" | awk '{print $1}')
+
+  if [ -z "$EXPECTED" ]; then
+    echo "❌ Error: could not find checksum entry for $FILENAME in checksums.txt"
+    exit 1
+  fi
+
+  # Pick available sha256 tool
+  if command -v sha256sum >/dev/null 2>&1; then
+    ACTUAL=$(sha256sum "$DOWNLOADED_FILE" | awk '{print $1}')
+  elif command -v shasum >/dev/null 2>&1; then
+    ACTUAL=$(shasum -a 256 "$DOWNLOADED_FILE" | awk '{print $1}')
+  elif command -v openssl >/dev/null 2>&1; then
+    ACTUAL=$(openssl dgst -sha256 "$DOWNLOADED_FILE" | awk '{print $2}')
+  else
+    echo "⚠  Warning: no sha256 tool found (sha256sum, shasum, openssl) — skipping verification"
+    return 0
+  fi
+
+  if [ "$EXPECTED" != "$ACTUAL" ]; then
+    echo "❌ Error: checksum verification failed!"
+    echo "  Expected: $EXPECTED"
+    echo "  Got:      $ACTUAL"
+    rm -f "$DOWNLOADED_FILE" "$CHECKSUMS_FILE"
+    exit 1
+  fi
+
+  printf "\033[0;32m[info] - Checksum verified ✓ \033[0m\n"
 }
 
 execute_with_sudo() {
@@ -124,7 +169,7 @@ install_binary(){
   esac
 
   # Cleanup
-  execute_with_sudo rm -f "$DOWNLOADED_FILE" "/tmp/$BINARY_NAME" 2>/dev/null || true
+  execute_with_sudo rm -f "$DOWNLOADED_FILE" "/tmp/$BINARY_NAME" "$CHECKSUMS_FILE" 2>/dev/null || true
 }
 
 # Function to display help text
@@ -141,6 +186,7 @@ while getopts "v:h" option; do
         v)
             VERSION_ARG=${OPTARG}
             download_release "$VERSION_ARG"
+            verify_checksum
             install_binary
             happyexit
             ;;
@@ -158,6 +204,7 @@ done
 # If no flags, install latest version by default
 if [ $# -eq 0 ]; then
     download_release
+    verify_checksum
     install_binary
     happyexit
 fi

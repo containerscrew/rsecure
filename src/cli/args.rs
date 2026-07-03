@@ -17,9 +17,9 @@ pub struct RsecureCliArgs {
 pub enum Commands {
     #[clap(about = "Encrypt a file in plain text  using your AES key.")]
     Encrypt(EncryptionArgs),
-    #[clap(about = "Decrypt an encrypted file using your AES private key.")]
+    #[clap(about = "Decrypt an encrypted file using your AES key.")]
     Decrypt(DecryptionArgs),
-    #[clap(about = "Create a new AES key pair.")]
+    #[clap(about = "Create a new AES key.")]
     CreateKey(CreateKeyArgs),
 }
 
@@ -80,10 +80,10 @@ pub struct DecryptionArgs {
 pub struct CommonArgs {
     #[arg(
         short = 'p',
-        long = "private-key-path",
+        long = "key-path",
         help = "Path to the AES key file (omit when using --passphrase)"
     )]
-    pub private_key_path: Option<String>,
+    pub key_path: Option<String>,
 
     #[arg(
         short = 's',

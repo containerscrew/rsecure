@@ -276,7 +276,7 @@ fn batch_needs_passphrase(source: &str) -> bool {
 }
 
 pub fn run(dec_args: DecryptionArgs) -> Result<()> {
-    let keyfile_master_key = match &dec_args.common.private_key_path {
+    let keyfile_master_key = match &dec_args.common.key_path {
         Some(path) => Some(open_private_key(path)?),
         None => None,
     };

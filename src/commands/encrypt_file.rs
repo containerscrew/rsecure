@@ -151,7 +151,7 @@ fn encrypt_to_path(
 
 pub fn run(enc_args: EncryptionArgs) -> Result<()> {
     // CLI guardrails: exactly one of {-p, --passphrase} on encrypt.
-    let key_path = enc_args.common.private_key_path.clone();
+    let key_path = enc_args.common.key_path.clone();
     let use_passphrase = enc_args.passphrase;
     match (&key_path, use_passphrase) {
         (Some(_), true) => {

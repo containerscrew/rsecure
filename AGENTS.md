@@ -41,7 +41,7 @@ Source layout:
 
 ## Setup & common commands
 
-Rust toolchain is pinned via `rust-toolchain.toml` (currently 1.94.0). Use the
+Rust toolchain is pinned via `rust-toolchain.toml` (currently 1.96.0). Use the
 `Makefile` targets when possible — they match what CI runs.
 
 ```bash

@@ -169,6 +169,9 @@ If future features ever require asymmetric crypto (for example, recipient-based 
 
 ## Development
 
+For a visual map of the internal call flow (CLI → key resolution → HKDF subkey →
+AES-GCM STREAM), see [`docs/architecture.md`](./docs/architecture.md).
+
 ### Prerequisites
 
 The Rust toolchain is pinned to a specific version in [`rust-toolchain.toml`](./rust-toolchain.toml),

@@ -8,6 +8,29 @@
 - update changelog for v0.2.0 - (53584da) - containerscrew
 
 - - -
+## 0.8.0 - 2026-07-03
+#### Features
+- (**cli**) rename --private-key-path flag to --key-path - (6503462) - containerscrew
+#### Documentation
+- (**agents**) require regenerating architecture diagrams on call-flow changes - (21e1dc5) - containerscrew
+- (**agents**) require re-indexing codebase-memory after code or important repo changes - (ed97761) - containerscrew
+- (**agents**) warn against committing scratch files and bumping past a feat as patch - (bfbe57b) - containerscrew
+- (**readme**) add -r flag to decrypt step in Quickstart - (0110d65) - containerscrew
+- (**readme**) show ciphertext peek step in Quickstart - (9aa078b) - containerscrew
+- add architecture diagrams (call flow + decrypt sequence) - (deb996d) - containerscrew
+- add Development setup section to README - (62f91cf) - containerscrew
+- document post-quantum design intent in README and SECURITY - (e906f0c) - containerscrew
+- reflect 0.7.0 Argon2 CLI knobs and zeroize memory hygiene - (8668a6a) - containerscrew
+#### Build system
+- pin Rust toolchain to 1.96.0 - (ca1905a) - containerscrew
+#### Continuous Integration
+- show all commits in release changelog and bump RUST_VERSION to 1.96.0 - (8542b88) - containerscrew
+#### Miscellaneous Chores
+- (**install**) verify sha256 checksum before install - (e7bbf43) - containerscrew
+- (**skills**) pin optional project skills via skills-lock - (bd0ed0a) - containerscrew
+
+- - -
+
 ## 0.7.0 - 2026-07-02
 #### Miscellaneous Chores
 - (**deps**) bump indicatif from 0.18.5 to 0.18.6 - (752b81b) - dependabot[bot]

@@ -1,6 +1,7 @@
 use std::{
     fs::File,
     io::{IsTerminal, Read, Write},
+    path::Path,
 };
 
 use anyhow::{Result, anyhow};
@@ -15,6 +16,12 @@ pub fn write_to_file(file_path: &str, contents: &[&[u8]]) -> Result<()> {
 }
 
 pub fn open_private_key(file_path: &str) -> Result<Zeroizing<Vec<u8>>> {
+    if Path::new(file_path).is_dir() {
+        return Err(anyhow!(
+            "Key path '{}' is a directory — expected a 32-byte key file",
+            file_path
+        ));
+    }
     let mut file = File::open(file_path)?;
     let file_len = file.metadata()?.len();
     let mut key_bytes = vec![0u8; 32];

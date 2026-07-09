@@ -335,3 +335,25 @@ fn decrypt_fails_when_v2_header_is_tampered() {
         "source .enc must be preserved on failure"
     );
 }
+
+#[test]
+fn encrypt_with_key_path_pointing_at_directory_gives_clear_error() {
+    let dir = tempdir().unwrap();
+
+    let key_dir = dir.path().join("not_a_key");
+    fs::create_dir(&key_dir).unwrap();
+    let file_path = dir.path().join("secret.txt");
+    fs::write(&file_path, b"hola mundo secreto").unwrap();
+
+    cargo_bin_cmd!("rsecure")
+        .args([
+            "encrypt",
+            "-p",
+            key_dir.to_str().unwrap(),
+            "-s",
+            file_path.to_str().unwrap(),
+        ])
+        .assert()
+        .failure()
+        .stderr(predicates::str::contains("is a directory"));
+}

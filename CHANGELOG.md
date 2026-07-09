@@ -8,6 +8,12 @@
 - update changelog for v0.2.0 - (53584da) - containerscrew
 
 - - -
+## 0.8.1 - 2026-07-09
+#### Bug Fixes
+- (**file_ops**) return a clear error when --key-path points at a directory - (3f9cc51) - containerscrew
+
+- - -
+
 ## 0.8.0 - 2026-07-03
 #### Features
 - (**cli**) rename --private-key-path flag to --key-path - (6503462) - containerscrew

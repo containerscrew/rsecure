@@ -30,6 +30,13 @@ jobs:
   security:
     name: Security audit
     runs-on: ubuntu-latest
+    # audit-check publishes findings via the Checks API; without checks:write it
+    # fails with "Resource not accessible by integration" the moment it has an
+    # advisory to report. Scoped to this job so the default contents:write for
+    # release jobs is unaffected.
+    permissions:
+      contents: read
+      checks: write
     steps:
       - name: Checkout
         uses: actions/checkout@v6

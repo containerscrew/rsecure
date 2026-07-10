@@ -25,8 +25,13 @@ derive a unique per-file AES-256 subkey, so the `(key, nonce)` pair is globally
 unique across files. The on-disk file header is bound as AAD on every chunk —
 tampering with magic, version, flags, chunk_size, or salt invalidates the first
 GCM tag. The format is versioned: v1 (rsecure ≤ 0.5.0, legacy decrypt-only),
-v2 (interim HKDF-only), v3 (current, with flags byte for keyfile vs passphrase).
-See `SECURITY.md` and `src/format.rs` for the wire layout.
+v2 (interim HKDF-only), v3 (current). The v3 flags byte carries independent
+capability bits: `FLAG_PASSPHRASE` (0x01, keyfile vs passphrase) and
+`FLAG_ENCRYPTED_NAME` (0x02, set by `--hide-name`, embeds the original filename
+as a `[u32 len][name]` prefix in the plaintext stream and writes the `.enc`
+under an opaque random name). New capability bits should extend the flags byte
+this way rather than mutating the v3 layout. See `SECURITY.md` and
+`src/format.rs` for the wire layout.
 
 Source layout:
 

@@ -120,6 +120,7 @@ sudo cp ./target/release/rsecure /usr/local/bin/
 | `rsecure encrypt -p /mnt/myusb/rsecure.key -s /home/rsecure/dirtoencrypt -e '.git'`      | Encrypt all files in a directory excluding `.git/` files             |
 | `rsecure encrypt --passphrase -s /home/mydirectory/text_to_encrypt.txt`                  | Encrypt with a passphrase (Argon2id), no key file needed             |
 | `rsecure encrypt --passphrase --argon2-memory 65536 --argon2-time 3 -s <path>`           | Tune Argon2id cost (memory in KiB, iterations, `--argon2-parallelism` for lanes) |
+| `rsecure encrypt -r -p /mnt/myusb/rsecure.key -s /home/mydirectory/secret.pdf --hide-name` | Encrypt hiding the filename: the `.enc` gets an opaque random name; use `-r` so the named original is not left behind. Decrypt restores the original name |
 | `rsecure decrypt -s /home/mydirectory/text_to_encrypt.txt.enc`                           | Decrypt a passphrase-encrypted file (auto-detected, prompts for it)  |
 
 > [!WARNING]

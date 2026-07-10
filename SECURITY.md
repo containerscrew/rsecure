@@ -23,8 +23,13 @@ Check the latest release at https://github.com/containerscrew/rsecure/releases.
 | File header         | `RSEC` (4 B) + version `0x03` (1 B) + flags (1 B) + chunk_size (u32 LE, 4 B) + HKDF salt (32 B) = **42 bytes**; passphrase mode appends Argon2 params (9 B) + Argon2 salt (16 B) for **67 bytes** total |
 | Header authenticity | The entire on-disk header is passed as AAD on every chunk; any tampering invalidates the first GCM tag and decryption fails before any plaintext is recovered |
 | Master key source   | Either a 32-byte keyfile (default) or derived once-per-invocation from a passphrase via Argon2id, see below |
+| Filename privacy (optional) | With `--hide-name`, the original filename is prepended to the plaintext stream as `[u32 LE name_len][name]` (so it is encrypted and authenticated like the file body) and the `.enc` is written under an opaque random name. The header's `FLAG_ENCRYPTED_NAME` (0x02) bit — part of the AAD — signals it; decrypt peels the prefix back off and restores the name. Only the leaf filename is protected: directory names, file sizes, and timestamps still leak (see Threat Model). |
 
 #### Master key sources
+
+The flags byte carries independent capability bits: `0x01` (`FLAG_PASSPHRASE`)
+selects the master-key source, and `0x02` (`FLAG_ENCRYPTED_NAME`) marks an
+embedded filename (see the format table). Both are covered by the header AAD.
 
 `flags & 0x01 == 0` (**keyfile**): the master key is the 32-byte keyfile passed
 via `-p`. This is the strongest default — the master key has 256 bits of OS-RNG
@@ -159,8 +164,15 @@ agreement or signing, and rsecure sidesteps it by construction.
 
 ### What rsecure does NOT guarantee
 
-- **Filename and directory structure are not protected.** Only the file contents are
-  encrypted; metadata (paths, sizes, timestamps) remain visible.
+- **Metadata is only partially protected.** By default the leaf filename, the
+  directory structure, file sizes, and timestamps all remain visible — only the
+  file contents are encrypted. The optional `--hide-name` flag encrypts the
+  **leaf filename** (writing the `.enc` under an opaque random name) but does
+  **not** hide directory names, file sizes, or timestamps. Fully hiding
+  structure and per-file sizes would require a single-container mode, which
+  rsecure does not yet provide. `--hide-name` only helps if the original file is
+  also removed (`-r`), otherwise the named plaintext stays on disk beside the
+  opaque ciphertext.
 - **Key storage is the user's responsibility.** A master key file left on disk in
   plaintext offers no protection against an attacker with filesystem access. Use
   full-disk encryption, a hardware token, or a password manager for key custody.

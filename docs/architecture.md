@@ -36,18 +36,23 @@ flowchart TD
     fe --> encs["encrypt_file_stream"] --> etp["encrypt_to_path"]
     fd --> decs["decrypt_file_stream"] --> dtp["decrypt_to_path"]
 
+    %% --- --hide-name output naming (encrypt) ---
+    encs -->|--hide-name| opq["opaque_enc_path<br/>random 32-hex .enc name"]
+
     %% --- decrypt: read header, pick subkey version ---
     dtp --> ph["parse_header<br/>src/format.rs"] --> ver{"version?"}
     ver -->|v2| dv2["derive_subkey_v2 (HKDF)"]
     ver -->|v3| dv3["derive_subkey_v3 (HKDF)"]
 
     %% --- encrypt: always v3 ---
+    etp -->|--hide-name| np["prepend [u32 len][name]<br/>to plaintext · FLAG_ENCRYPTED_NAME"]
     etp --> dv3e["derive_subkey_v3<br/>HKDF-SHA256 · per-file subkey"]
 
     %% --- AES-GCM STREAM core ---
     dv3e --> gcmE["AES-256-GCM STREAM<br/>EncryptorBE32 · 128 KiB chunks<br/>header bound as AAD"]
-    dv2 --> gcmD["AES-256-GCM STREAM (decrypt)"]
+    dv2 --> gcmD["drive_decrypt_loop<br/>AES-256-GCM STREAM (decrypt)<br/>requires terminal encrypt_last<br/>(truncation → error)"]
     dv3 --> gcmD
+    gcmD -->|has_encrypted_name| nsw["NameStrippingWriter<br/>peel name → validate_embedded_name<br/>→ recovered_dest"]
 ```
 
 ## Decrypt sequence
@@ -87,7 +92,11 @@ sequenceDiagram
         R->>K: derive_subkey_v2/v3(master_key, hkdf_salt)
         K-->>R: per-file AES-256 subkey
         R->>G: drive_decrypt_loop (128 KiB chunks)
+        Note over R,G: stream must end on encrypt_last;<br/>EOF at a chunk boundary → truncation error
         G-->>R: plaintext chunks (verify tag per chunk)
+        opt FLAG_ENCRYPTED_NAME set
+            Note over R: NameStrippingWriter peels [u32 len][name],<br/>validate_embedded_name, restore original name
+        end
         R->>F: fs::rename tmp → final ( -r removes .enc )
     end
 ```

@@ -28,6 +28,19 @@ pub const VERSION_V2: u8 = 0x02;
 pub const VERSION_V3: u8 = 0x03;
 
 pub const FLAG_PASSPHRASE: u8 = 0x01;
+/// When set, the plaintext stream is prefixed with `[u32 LE name_len][name]`
+/// (the original filename, UTF-8) before the file contents. The prefix is
+/// encrypted and authenticated like any other plaintext, and the `.enc` file
+/// itself is written under an opaque random name. See `NAME_LEN_PREFIX` and
+/// `MAX_ENCRYPTED_NAME_LEN`.
+pub const FLAG_ENCRYPTED_NAME: u8 = 0x02;
+
+/// Width of the little-endian length prefix that precedes an encrypted name.
+pub const NAME_LEN_PREFIX: usize = 4;
+/// Upper bound on an encrypted filename so the whole prefix always fits inside
+/// the first plaintext chunk and a hostile header can't request an absurd
+/// allocation.
+pub const MAX_ENCRYPTED_NAME_LEN: usize = 4096;
 
 pub const HKDF_SALT_LEN: usize = 32;
 pub const HKDF_INFO_V2: &[u8] = b"rsecure-v2-aes256gcm-stream";
@@ -110,6 +123,18 @@ impl Header {
             Header::V2 { bytes, .. } => bytes,
             Header::V3Keyfile { bytes, .. } => bytes,
             Header::V3Passphrase { bytes, .. } => bytes,
+        }
+    }
+
+    /// True when the plaintext stream is prefixed with the original filename
+    /// (v3 `FLAG_ENCRYPTED_NAME`). Only v3 headers can carry it; v1/v2 never do.
+    /// The flag lives in the header's flags byte (index 5), which is part of the
+    /// AAD, so it cannot be flipped without failing authentication.
+    pub fn has_encrypted_name(&self) -> bool {
+        match self {
+            Header::V1Legacy { .. } | Header::V2 { .. } => false,
+            Header::V3Keyfile { bytes, .. } => bytes[5] & FLAG_ENCRYPTED_NAME != 0,
+            Header::V3Passphrase { bytes, .. } => bytes[5] & FLAG_ENCRYPTED_NAME != 0,
         }
     }
 }
@@ -234,11 +259,12 @@ pub fn parse_header(file: &mut File) -> Result<Header> {
 pub fn build_v3_keyfile_header(
     chunk_size: u32,
     hkdf_salt: &[u8; HKDF_SALT_LEN],
+    extra_flags: u8,
 ) -> [u8; HEADER_LEN_V3_KEYFILE] {
     let mut bytes = [0u8; HEADER_LEN_V3_KEYFILE];
     bytes[0..4].copy_from_slice(MAGIC);
     bytes[4] = VERSION_V3;
-    bytes[5] = 0;
+    bytes[5] = extra_flags;
     bytes[6..10].copy_from_slice(&chunk_size.to_le_bytes());
     bytes[10..42].copy_from_slice(hkdf_salt);
     bytes
@@ -249,11 +275,12 @@ pub fn build_v3_passphrase_header(
     hkdf_salt: &[u8; HKDF_SALT_LEN],
     argon2_params: &Argon2Params,
     argon2_salt: &[u8; ARGON2_SALT_LEN],
+    extra_flags: u8,
 ) -> [u8; HEADER_LEN_V3_PASSPHRASE] {
     let mut bytes = [0u8; HEADER_LEN_V3_PASSPHRASE];
     bytes[0..4].copy_from_slice(MAGIC);
     bytes[4] = VERSION_V3;
-    bytes[5] = FLAG_PASSPHRASE;
+    bytes[5] = FLAG_PASSPHRASE | extra_flags;
     bytes[6..10].copy_from_slice(&chunk_size.to_le_bytes());
     bytes[10..42].copy_from_slice(hkdf_salt);
     bytes[42..46].copy_from_slice(&argon2_params.m_cost.to_le_bytes());

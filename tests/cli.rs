@@ -421,3 +421,61 @@ fn decrypt_rejects_ciphertext_truncated_at_chunk_boundary() {
         "truncated ciphertext must not yield a partial plaintext"
     );
 }
+
+#[test]
+fn hide_name_writes_opaque_file_and_restores_original_name() {
+    let dir = tempdir().unwrap();
+    let key_path = dir.path().join("key.bin");
+    let secret = dir.path().join("carta_despido.pdf");
+    let payload = b"contenido confidencial que no debe revelar su nombre";
+    fs::write(&secret, payload).unwrap();
+
+    cargo_bin_cmd!("rsecure")
+        .args(["create-key", "-o", key_path.to_str().unwrap()])
+        .assert()
+        .success();
+
+    // Encrypt hiding the name and removing the original.
+    cargo_bin_cmd!("rsecure")
+        .args([
+            "encrypt",
+            "-p",
+            key_path.to_str().unwrap(),
+            "-s",
+            secret.to_str().unwrap(),
+            "--hide-name",
+            "-r",
+        ])
+        .assert()
+        .success();
+
+    // The original is gone and the only .enc must NOT reveal the name.
+    assert!(!secret.exists(), "original file should have been removed");
+    let enc: Vec<_> = fs::read_dir(dir.path())
+        .unwrap()
+        .filter_map(|e| e.ok())
+        .map(|e| e.path())
+        .filter(|p| p.extension().is_some_and(|x| x == "enc"))
+        .collect();
+    assert_eq!(enc.len(), 1, "exactly one .enc expected");
+    let enc_name = enc[0].file_name().unwrap().to_string_lossy().into_owned();
+    assert!(
+        !enc_name.contains("carta_despido"),
+        "opaque name must not leak the original filename, got {enc_name}"
+    );
+
+    // Decrypt: the original filename and contents must come back.
+    cargo_bin_cmd!("rsecure")
+        .args([
+            "decrypt",
+            "-p",
+            key_path.to_str().unwrap(),
+            "-s",
+            enc[0].to_str().unwrap(),
+        ])
+        .assert()
+        .success();
+
+    assert!(secret.exists(), "original filename should be restored");
+    assert_eq!(fs::read(&secret).unwrap(), payload);
+}

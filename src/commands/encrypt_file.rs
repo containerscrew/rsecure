@@ -1,12 +1,13 @@
 use std::fs::{self, File};
-use std::io::Write;
+use std::io::{Cursor, Read, Write};
 use std::path::{Component, Path};
 
 use crate::cli::EncryptionArgs;
 use crate::crypto::{derive_master_key_argon2, derive_subkey_v3};
 use crate::file_ops::{open_private_key, prompt_passphrase};
 use crate::format::{
-    self, ARGON2_SALT_LEN, Argon2Params, CHUNK_SIZE, HKDF_SALT_LEN, STREAM_SALT_LEN,
+    self, ARGON2_SALT_LEN, Argon2Params, CHUNK_SIZE, HKDF_SALT_LEN, MAX_ENCRYPTED_NAME_LEN,
+    NAME_LEN_PREFIX, STREAM_SALT_LEN,
 };
 use crate::utils::{fill_buffer, is_dir, is_file};
 use aes_gcm::Aes256Gcm;
@@ -47,6 +48,25 @@ struct EncryptContext {
     /// `Some` for passphrase mode: every file embeds these Argon2 params and
     /// salt in its header so decrypt can re-derive without prompting again.
     passphrase_meta: Option<(Argon2Params, [u8; ARGON2_SALT_LEN])>,
+    /// When true, the original filename is embedded in the encrypted stream and
+    /// the `.enc` is written under an opaque random name (see `opaque_enc_path`).
+    hide_name: bool,
+}
+
+/// Build an opaque `<32 hex>.enc` path in the same directory as `source`, so a
+/// hidden-name ciphertext leaks nothing about the original filename through its
+/// own name.
+fn opaque_enc_path(source: &str) -> String {
+    let mut rand = [0u8; 16];
+    OsRng.fill_bytes(&mut rand);
+    let hex: String = rand.iter().map(|b| format!("{b:02x}")).collect();
+    let name = format!("{hex}.enc");
+    match Path::new(source).parent() {
+        Some(parent) if !parent.as_os_str().is_empty() => {
+            parent.join(name).to_string_lossy().into_owned()
+        }
+        _ => name,
+    }
 }
 
 fn encrypt_file_stream(
@@ -55,8 +75,12 @@ fn encrypt_file_stream(
     should_remove: bool,
     show_progress: bool,
 ) -> Result<()> {
-    let final_dest = format!("{}.enc", source);
-    let tmp_dest = format!("{}.enc.tmp", source);
+    let final_dest = if ctx.hide_name {
+        opaque_enc_path(source)
+    } else {
+        format!("{source}.enc")
+    };
+    let tmp_dest = format!("{final_dest}.tmp");
 
     match encrypt_to_path(ctx, source, &tmp_dest, show_progress) {
         Ok(()) => {
@@ -89,20 +113,48 @@ fn encrypt_to_path(
     let stream_salt = [0u8; STREAM_SALT_LEN];
     let mut encryptor = stream::EncryptorBE32::from_aead(cipher, &stream_salt.into());
 
+    // When hiding the name, prepend `[u32 LE name_len][name]` to the plaintext
+    // stream so the filename is encrypted and authenticated alongside the file
+    // contents, and flag the header so decrypt knows to peel it back off.
+    let (extra_flags, name_prefix) = if ctx.hide_name {
+        let name = Path::new(source)
+            .file_name()
+            .ok_or_else(|| anyhow!("Cannot hide name: '{source}' has no final path component"))?
+            .to_string_lossy();
+        let name_bytes = name.as_bytes();
+        if name_bytes.is_empty() || name_bytes.len() > MAX_ENCRYPTED_NAME_LEN {
+            return Err(anyhow!(
+                "Filename length {} is out of range (1..={})",
+                name_bytes.len(),
+                MAX_ENCRYPTED_NAME_LEN
+            ));
+        }
+        let mut prefix = Vec::with_capacity(NAME_LEN_PREFIX + name_bytes.len());
+        prefix.extend_from_slice(&(name_bytes.len() as u32).to_le_bytes());
+        prefix.extend_from_slice(name_bytes);
+        (format::FLAG_ENCRYPTED_NAME, prefix)
+    } else {
+        (0u8, Vec::new())
+    };
+
     let header: Vec<u8> = match ctx.passphrase_meta {
-        None => format::build_v3_keyfile_header(CHUNK_SIZE, &hkdf_salt).to_vec(),
+        None => format::build_v3_keyfile_header(CHUNK_SIZE, &hkdf_salt, extra_flags).to_vec(),
         Some((params, salt)) => {
-            format::build_v3_passphrase_header(CHUNK_SIZE, &hkdf_salt, &params, &salt).to_vec()
+            format::build_v3_passphrase_header(CHUNK_SIZE, &hkdf_salt, &params, &salt, extra_flags)
+                .to_vec()
         }
     };
 
-    let mut source_file = File::open(source)?;
+    let source_file = File::open(source)?;
     let file_size = source_file.metadata()?.len();
+    let total_plaintext = file_size + name_prefix.len() as u64;
+    // Read the name prefix first, then the file contents, as one logical stream.
+    let mut reader = Cursor::new(name_prefix).chain(source_file);
     let mut dest_file = File::create(tmp_dest)?;
     dest_file.write_all(&header)?;
 
     let pb = if show_progress {
-        let pb = ProgressBar::new(file_size);
+        let pb = ProgressBar::new(total_plaintext);
         pb.set_style(ProgressStyle::default_bar()
             .template("{spinner:.green} [{elapsed_precise}] [{wide_bar:.cyan/blue}] {bytes}/{total_bytes} ({bytes_per_sec}, {eta})")
             .unwrap()
@@ -115,7 +167,7 @@ fn encrypt_to_path(
     let mut buffer = vec![0u8; CHUNK_SIZE as usize];
 
     loop {
-        let read_count = fill_buffer(&mut source_file, &mut buffer)?;
+        let read_count = fill_buffer(&mut reader, &mut buffer)?;
         if let Some(ref pb) = pb {
             pb.inc(read_count as u64);
         }
@@ -188,9 +240,17 @@ pub fn run(enc_args: EncryptionArgs) -> Result<()> {
         passphrase_meta = None;
     }
 
+    if enc_args.hide_name && !enc_args.common.remove_file {
+        eprintln!(
+            "{} --hide-name was set but -r/--remove-file was not: the original file (and its name) will remain on disk next to the opaque .enc. Add -r to remove it.",
+            style("!").yellow().bold(),
+        );
+    }
+
     let ctx = EncryptContext {
         master_key,
         passphrase_meta,
+        hide_name: enc_args.hide_name,
     };
 
     if is_dir(&enc_args.common.source) {

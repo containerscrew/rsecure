@@ -68,6 +68,13 @@ pub struct EncryptionArgs {
         default_value = "1"
     )]
     pub argon2_p_cost: u8,
+
+    #[arg(
+        long = "hide-name",
+        default_value_t = false,
+        help = "Encrypt the original filename into the file and write the .enc with an opaque random name. The name is restored on decrypt."
+    )]
+    pub hide_name: bool,
 }
 
 #[derive(Debug, Args, Clone, PartialEq, Eq)]

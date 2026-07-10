@@ -8,6 +8,17 @@
 - update changelog for v0.2.0 - (53584da) - containerscrew
 
 - - -
+## 0.9.0 - 2026-07-10
+#### Features
+- (**encrypt**) add --hide-name to encrypt the original filename and write opaque .enc names - (f652118) - containerscrew
+#### Bug Fixes
+- (**decrypt**) detect truncated ciphertext by requiring the stream to end on encrypt_last - (63f9cc1) - containerscrew
+- (**deps**) bump crossbeam-epoch to 0.9.20 (RUSTSEC-2026-0204) - (77e36ed) - containerscrew
+#### Continuous Integration
+- (**security**) grant checks:write to the security job so audit-check can report advisories - (832c0bc) - containerscrew
+
+- - -
+
 ## 0.8.1 - 2026-07-09
 #### Bug Fixes
 - (**file_ops**) return a clear error when --key-path points at a directory - (3f9cc51) - containerscrew

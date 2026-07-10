@@ -1,5 +1,5 @@
 use std::fs::{self, File};
-use std::io::{Read, Write};
+use std::io::Write;
 use std::path::{Component, Path};
 
 use crate::cli::EncryptionArgs;
@@ -8,7 +8,7 @@ use crate::file_ops::{open_private_key, prompt_passphrase};
 use crate::format::{
     self, ARGON2_SALT_LEN, Argon2Params, CHUNK_SIZE, HKDF_SALT_LEN, STREAM_SALT_LEN,
 };
-use crate::utils::{is_dir, is_file};
+use crate::utils::{fill_buffer, is_dir, is_file};
 use aes_gcm::Aes256Gcm;
 use aes_gcm::aead::rand_core::RngCore;
 use aes_gcm::aead::{KeyInit, OsRng, Payload, stream};
@@ -115,7 +115,7 @@ fn encrypt_to_path(
     let mut buffer = vec![0u8; CHUNK_SIZE as usize];
 
     loop {
-        let read_count = source_file.read(&mut buffer)?;
+        let read_count = fill_buffer(&mut source_file, &mut buffer)?;
         if let Some(ref pb) = pb {
             pb.inc(read_count as u64);
         }

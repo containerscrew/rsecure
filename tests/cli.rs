@@ -357,3 +357,67 @@ fn encrypt_with_key_path_pointing_at_directory_gives_clear_error() {
         .failure()
         .stderr(predicates::str::contains("is a directory"));
 }
+
+#[test]
+fn decrypt_rejects_ciphertext_truncated_at_chunk_boundary() {
+    // STREAM seals the final segment with `encrypt_last`; a well-formed file
+    // always ends on that segment. Cutting the ciphertext at a chunk boundary
+    // leaves it ending on an `encrypt_next` chunk, which must be rejected as a
+    // truncation instead of silently yielding a partial plaintext.
+    const CHUNK: u64 = 131_072;
+    const TAG: u64 = 16;
+
+    let dir = tempdir().unwrap();
+    let key_path = dir.path().join("key.bin");
+    let file_path = dir.path().join("secret.bin");
+    let enc_path = dir.path().join("secret.bin.enc");
+    let dec_path = dir.path().join("secret.bin"); // decrypt trims .enc back to this
+
+    // Exactly two full chunks so the truncation lands on a clean boundary.
+    let payload = vec![0x5au8; (CHUNK * 2) as usize];
+    fs::write(&file_path, &payload).unwrap();
+
+    cargo_bin_cmd!("rsecure")
+        .args(["create-key", "-o", key_path.to_str().unwrap()])
+        .assert()
+        .success();
+
+    cargo_bin_cmd!("rsecure")
+        .args([
+            "encrypt",
+            "-p",
+            key_path.to_str().unwrap(),
+            "-s",
+            file_path.to_str().unwrap(),
+        ])
+        .assert()
+        .success();
+
+    // Remove the plaintext so any recovered bytes must come from the ciphertext.
+    fs::remove_file(&file_path).unwrap();
+
+    // Drop the trailing `encrypt_next` chunk (CHUNK + TAG) plus the empty
+    // `encrypt_last` tag (TAG), leaving header + first chunk only.
+    let full_len = fs::metadata(&enc_path).unwrap().len();
+    let enc_file = fs::OpenOptions::new().write(true).open(&enc_path).unwrap();
+    enc_file.set_len(full_len - CHUNK - TAG - TAG).unwrap();
+    drop(enc_file);
+
+    cargo_bin_cmd!("rsecure")
+        .args([
+            "decrypt",
+            "-p",
+            key_path.to_str().unwrap(),
+            "-s",
+            enc_path.to_str().unwrap(),
+        ])
+        .assert()
+        .failure()
+        .stderr(predicates::str::contains("truncated"));
+
+    // No partial plaintext must survive at the final destination.
+    assert!(
+        !dec_path.exists(),
+        "truncated ciphertext must not yield a partial plaintext"
+    );
+}

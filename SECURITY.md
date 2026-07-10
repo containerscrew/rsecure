@@ -130,8 +130,13 @@ agreement or signing, and rsecure sidesteps it by construction.
   possess the master key.
 - **Integrity & authenticity** of each chunk — any tampering will be detected on decrypt
   (GCM authentication tag).
-- **Resistance to chunk reordering or truncation** — STREAM binds chunks via a counter
-  and a final-chunk marker.
+- **Resistance to chunk reordering or truncation** — STREAM binds chunks via a
+  counter and seals the final chunk with a distinct `encrypt_last` marker. The
+  decrypter enforces this: it only accepts a stream that terminates on that
+  final chunk, so a ciphertext cut at a chunk boundary (or with its trailing
+  segment removed) is rejected as truncated instead of yielding a partial
+  plaintext. Reordering or splicing chunks breaks the per-chunk counter and
+  fails authentication.
 - **No catastrophic nonce reuse across files** — the per-file HKDF subkey makes the
   `(key, nonce)` pair globally unique even with a fixed STREAM nonce.
 - **Best-effort memory hygiene** for secrets. Passphrases, master keys, and
@@ -140,9 +145,11 @@ agreement or signing, and rsecure sidesteps it by construction.
   freedom from compiler-introduced copies or spilled stack slots, and swap /
   hibernation / core dumps can still leak secrets outside the process — but it
   narrows the residual-memory attack surface.
-- **Header authenticity (v2 only).** Modifying any byte of the on-disk header
-  (magic, version, chunk_size, salt) causes decryption to fail with an auth error
-  on the first chunk, before any plaintext is written. There is no downgrade,
+- **Header authenticity (v2 and v3).** The entire on-disk header — magic,
+  version, and for v3 the flags byte, chunk_size, HKDF salt, and (in passphrase
+  mode) the Argon2 parameters and salt — is bound as AAD on every chunk.
+  Modifying any header byte causes decryption to fail with an auth error on the
+  first chunk, before any plaintext is written. There is no downgrade,
   rebinding, or wrong-key-via-salt-swap path that produces valid plaintext.
 - **Post-quantum design intent (symmetric-only).** No RSA, ECDH, ECDSA, or
   X25519 is used, so Shor's algorithm has nothing to break in the current

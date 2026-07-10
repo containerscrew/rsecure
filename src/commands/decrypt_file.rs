@@ -7,7 +7,7 @@ use crate::cli::DecryptionArgs;
 use crate::crypto::{derive_master_key_argon2, derive_subkey_v2, derive_subkey_v3};
 use crate::file_ops::{open_private_key, prompt_passphrase};
 use crate::format::{self, AEAD_TAG_LEN, ARGON2_SALT_LEN, CHUNK_SIZE, Header, STREAM_SALT_LEN};
-use crate::utils::{is_dir, is_file};
+use crate::utils::{fill_buffer, is_dir, is_file};
 use aes_gcm::Aes256Gcm;
 use aes_gcm::aead::{KeyInit, Payload, stream};
 use anyhow::{Result, anyhow};
@@ -221,11 +221,16 @@ fn drive_decrypt_loop(
     pb: Option<ProgressBar>,
 ) -> Result<()> {
     loop {
-        let read_count = source_file.read(buffer)?;
+        let read_count = fill_buffer(source_file, buffer)?;
         if let Some(ref pb) = pb {
             pb.inc(read_count as u64);
         }
         if read_count == buffer.len() {
+            // A full buffer is always an intermediate `encrypt_next` chunk: the
+            // encrypter never seals a full-size chunk with `encrypt_last`, and
+            // it always emits a trailing `encrypt_last` segment (a partial
+            // chunk, or a bare 16-byte tag when the plaintext is a whole number
+            // of chunks). So more ciphertext must follow.
             let payload = Payload {
                 msg: buffer[..].as_ref(),
                 aad,
@@ -234,7 +239,12 @@ fn drive_decrypt_loop(
                 .decrypt_next(payload)
                 .map_err(|_| anyhow!("Decryption error or file corrupted"))?;
             dest_file.write_all(&plaintext)?;
-        } else if read_count > 0 {
+        } else if read_count >= AEAD_TAG_LEN {
+            // A partial buffer means genuine EOF (fill_buffer drained short
+            // reads), so this is the terminal segment sealed with
+            // `encrypt_last`. Requiring every stream to end here is what makes
+            // truncation detectable: a file cut at a chunk boundary ends right
+            // after a `decrypt_next` and falls into the `else` branch below.
             let payload = Payload {
                 msg: &buffer[..read_count],
                 aad,
@@ -245,7 +255,12 @@ fn drive_decrypt_loop(
             dest_file.write_all(&plaintext)?;
             break;
         } else {
-            break;
+            // Fewer bytes remain than a GCM tag (including zero): the
+            // `encrypt_last` segment that every well-formed file ends with is
+            // missing, i.e. the ciphertext was truncated.
+            return Err(anyhow!(
+                "Decryption error: ciphertext is truncated (missing final chunk)"
+            ));
         }
     }
     if let Some(pb) = pb {
